@@ -4,6 +4,8 @@ test('desktop wheel, keyboard, chapter links and deep links work', async ({ page
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('./');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://shi-tong-chang.github.io/PersonalWeb/');
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/PersonalWeb/favicon.svg');
   await expect(page.locator('body')).toHaveClass(/is-paged/);
   await page.mouse.move(700, 500);
   await page.mouse.wheel(0, 180);
