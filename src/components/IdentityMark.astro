@@ -1,0 +1,14 @@
+---
+interface Props { class?: string; }
+const { class: className = '' } = Astro.props;
+const ribbon = 'M94 58H320L364 102V158H194L252 222H364V322L320 366H94L50 322V266H220L162 202H50V102Z';
+---
+<svg class={`identity-mark ${className}`} viewBox="0 0 440 440" fill="none" aria-hidden="true">
+  <g class="mark-body" transform="translate(4 8) rotate(-12 220 220)">
+    {[12, 10, 8, 6, 4, 2].map(depth => <path d={ribbon} transform={`translate(${depth} ${depth * 1.6})`} fill="#9f2b14" stroke="#86230f" stroke-width=".5" />)}
+    <path d={ribbon} fill="currentColor" />
+    <path d="M94 58H320L364 102H94L50 146V102Z" fill="#fff" fill-opacity=".15" />
+    <path d="M50 266H220L162 202H50M194 158H364M94 366H320L364 322" stroke="#782511" stroke-opacity=".23" stroke-width="1.5" />
+    <path d="M94 58H320L364 102M50 266H220" stroke="#fff" stroke-opacity=".35" stroke-width="1.5" />
+  </g>
+</svg>

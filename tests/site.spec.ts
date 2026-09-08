@@ -38,6 +38,69 @@ test('trackpad wheel burst advances only one chapter', async ({ page }) => {
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
 });
 
+test('rapid chapter selection finishes on the latest destination with accessible focus', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
+  await page.evaluate(() => {
+    for (const index of [1, 2, 3]) {
+      document.querySelector<HTMLAnchorElement>(`nav [data-chapter="${index}"]`)!.click();
+    }
+  });
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'contact');
+  await expect(page.locator('#contact')).toBeFocused();
+  await expect(page.locator('#contact')).not.toHaveAttribute('inert');
+  await expect(page.locator('#about')).toHaveAttribute('inert');
+  await expect(page).toHaveURL(/#contact$/);
+  await page.waitForTimeout(750);
+  await page.keyboard.press('Home');
+  await expect(page.locator('#about')).toBeFocused();
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'about');
+});
+
+test('large touch screens retain native scrolling and chapter navigation', async ({ browser }) => {
+  const context = await browser.newContext({ hasTouch: true, viewport: { width: 1024, height: 1366 } });
+  const page = await context.newPage();
+  await page.goto('http://127.0.0.1:4321/PersonalWeb/');
+  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
+  await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).tap();
+  await expect(page.locator('#contact')).toBeInViewport();
+  await expect(page.locator('#contact')).toBeFocused();
+  await expect(page.locator('.chapter[inert]')).toHaveCount(0);
+  await context.close();
+});
+
+test('longer content switches to native scrolling and remains reachable', async ({ page }) => {
+  await page.goto('./');
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
+  await page.locator('#projects .project-description').first().evaluate(element => {
+    // Extend the actual editable copy without changing the chapter's grid structure.
+    element.append(document.createTextNode('這是延長的專案介紹，補上背景、過程與實作心得。'.repeat(90)));
+    const lastLine = document.createElement('span');
+    lastLine.dataset.testid = 'extended-copy-end';
+    lastLine.style.display = 'block';
+    lastLine.textContent = '完整內容的最後一行';
+    element.append(lastLine);
+  });
+  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
+  await expect(page.locator('.chapter[inert]')).toHaveCount(0);
+  const lastLine = page.getByTestId('extended-copy-end');
+  await lastLine.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await expect.poll(() => lastLine.evaluate(element => {
+    const bounds = element.getBoundingClientRect();
+    const section = element.closest('.chapter')!.getBoundingClientRect();
+    const header = document.querySelector('.site-header')!.getBoundingClientRect();
+    const footer = document.querySelector('.site-footer')!.getBoundingClientRect();
+    return bounds.height > 0
+      && bounds.top >= Math.max(header.bottom, section.top)
+      && bounds.bottom <= Math.min(footer.top, section.bottom)
+      && bounds.left >= Math.max(0, section.left)
+      && bounds.right <= Math.min(innerWidth, section.right);
+  }), { message: 'The full final line must be inside its chapter and visible between the fixed header and footer.' }).toBe(true);
+  await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
+  await expect(page.locator('#contact')).toBeInViewport();
+});
+
 test('mobile keeps all content reachable without horizontal overflow', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('./');

@@ -4,12 +4,23 @@ import 'swiper/css';
 
 const sections = [...document.querySelectorAll<HTMLElement>('.chapter')];
 const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-chapter]')];
-const media = matchMedia('(min-width: 900px) and (min-height: 700px) and (prefers-reduced-motion: no-preference)');
+const media = matchMedia('(min-width: 900px) and (min-height: 700px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let swiper: Swiper | undefined;
 let activeIndex = 0;
 let observer: IntersectionObserver | undefined;
 let pendingNavigation: { index: number; focus: boolean } | undefined;
+
+// Longer copy, larger text and late-loading fonts must never be clipped to a slide.
+function contentFitsViewport() {
+  return sections.every(section => {
+    const content = section.querySelector<HTMLElement>(':scope > .section-inner');
+    if (!content) return false;
+    const style = getComputedStyle(section);
+    const requiredHeight = content.offsetHeight + parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+    return requiredHeight <= innerHeight + 1;
+  });
+}
 
 function hashIndex() {
   const index = sections.findIndex(section => `#${section.id}` === location.hash);
@@ -53,14 +64,15 @@ function goTo(index: number, focus = false) {
 }
 
 function configure() {
+  const paged = media.matches && contentFitsViewport();
   const index = swiper ? activeIndex : hashIndex();
   pendingNavigation = undefined;
   observer?.disconnect();
   swiper?.destroy(true, true);
   swiper = undefined;
   sections.forEach(section => { section.inert = false; });
-  document.body.classList.toggle('is-paged', media.matches);
-  if (media.matches) {
+  document.body.classList.toggle('is-paged', paged);
+  if (paged) {
     window.scrollTo(0, 0);
     swiper = new Swiper('.chapters', {
       modules: [A11y],
@@ -87,8 +99,11 @@ function configure() {
   } else {
     update(index, false);
     sections[index].scrollIntoView({ behavior: 'instant' });
+    const intersections = new Map<Element, IntersectionObserverEntry>();
     observer = new IntersectionObserver(entries => {
-      const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      // A callback contains only changed entries, not every visible chapter.
+      entries.forEach(entry => intersections.set(entry.target, entry));
+      const visible = [...intersections.values()].filter(entry => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
       if (visible) update(sections.indexOf(visible.target as HTMLElement));
     }, { rootMargin: '-20% 0px -35% 0px', threshold: [0, 0.2, 0.5] });
     sections.forEach(section => observer!.observe(section));
@@ -139,6 +154,20 @@ document.addEventListener('wheel', event => {
 window.addEventListener('hashchange', () => goTo(hashIndex()));
 media.addEventListener('change', configure);
 configure();
+
+let layoutFrame = 0;
+function checkLayout() {
+  cancelAnimationFrame(layoutFrame);
+  layoutFrame = requestAnimationFrame(() => {
+    if ((media.matches && contentFitsViewport()) !== Boolean(swiper)) configure();
+  });
+}
+const contentObserver = new ResizeObserver(checkLayout);
+sections.forEach(section => {
+  const content = section.querySelector<HTMLElement>(':scope > .section-inner');
+  if (content) contentObserver.observe(content);
+});
+window.addEventListener('resize', checkLayout);
 
 document.querySelector<HTMLButtonElement>('#copy-email')?.addEventListener('click', async event => {
   const button = event.currentTarget as HTMLButtonElement;

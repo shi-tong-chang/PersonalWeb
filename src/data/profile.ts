@@ -1,13 +1,45 @@
-// Personal content lives here. Replace the explicitly marked placeholders as you go.
+// All visitor-facing copy is editable here. Empty optional fields are not rendered.
+// The display name is derived from the GitHub handle; replace it with your preferred name.
 export const profile = {
   name: 'shi-tong-chang',
+  displayName: ['SHI-TONG', 'CHANG'],
   monogram: 'STC',
-  title: '把想法，化為可以體驗的作品。',
-  introduction: '歡迎來到我的個人空間。這裡將記錄我的專案、擅長的事，以及持續探索的方向。',
-  aboutNote: '關於我的背景與經歷，正在整理中。',
+  title: '一個人，不只一種可能。',
+  introduction: '我的作品、思考，以及還在探索的事。',
+  biography: '',
   github: 'https://github.com/shi-tong-chang',
-  // Add a public contact email to show the email and copy buttons.
   email: '',
+};
+
+export const copy = {
+  navigation: ['個人介紹', '專案經歷', '擅長技能', '聯繫方式'],
+  about: {
+    eyebrow: 'A PERSONAL INTRODUCTION',
+    action: '從作品認識我',
+    secondaryAction: '打聲招呼',
+    signature: 'A WORK IN PROGRESS. JUST LIKE ME.',
+  },
+  projects: {
+    eyebrow: 'SELECTED WORK',
+    heading: ['Made with', 'intention.'],
+    subtitle: '想法，留下了形狀。',
+    action: '查看 GitHub 專案',
+    footer: '每一件作品，都是認識我的另一個入口。',
+  },
+  skills: {
+    eyebrow: 'BEHIND THE WORK',
+    heading: ['More than', 'a skill set.'],
+    subtitle: '作品之外，還有這些面向。',
+    note: '專長與工具，留待我慢慢補上。',
+  },
+  contact: {
+    eyebrow: 'THE NEXT CHAPTER',
+    heading: ['LET’S', 'CONNECT.'],
+    title: '認識彼此，從一句 Hello 開始。',
+    introduction: '如果你也有想分享的事，歡迎來打聲招呼。',
+    action: '到 GitHub 找我',
+    signature: 'THANKS FOR STOPPING BY.',
+  },
 };
 
 export const projects = [
@@ -16,14 +48,15 @@ export const projects = [
     name: 'PersonalWeb',
     category: 'PERSONAL WEBSITE',
     year: '2026',
-    description: '以四個視覺章節，串起個人介紹、專案、技能與聯繫。這是我的個人網站，也是持續迭代的起點。',
-    tags: ['Astro', 'TypeScript', 'Swiper'],
+    description: '一個關於我的空間。用設計、互動與作品，慢慢拼出完整的輪廓。',
+    tags: ['Astro', 'TypeScript', 'Interaction'],
     url: 'https://github.com/shi-tong-chang/PersonalWeb',
   },
 ];
 
+// Keep these as neutral categories until you add your actual experience.
 export const skills = [
-  { number: '01', title: '主要專長', english: 'EXPERTISE', description: '將在這裡介紹我最擅長的領域，以及能解決的問題。', tags: ['內容待補'] },
-  { number: '02', title: '常用工具', english: 'TOOLKIT', description: '將在這裡整理實際使用的語言、框架與工作工具。', tags: ['內容待補'] },
-  { number: '03', title: '探索方向', english: 'EXPLORING', description: '將在這裡分享正在學習、實驗與持續關注的事。', tags: ['內容待補'] },
+  { number: '01', title: '擅長的事', english: 'EXPERTISE', description: '', tags: [] as string[] },
+  { number: '02', title: '使用的工具', english: 'TOOLKIT', description: '', tags: [] as string[] },
+  { number: '03', title: '正在探索', english: 'CURIOSITY', description: '', tags: [] as string[] },
 ];
