@@ -1,0 +1,133 @@
+---
+interface Props {
+  art: 'qin' | 'qi' | 'shu' | 'hua';
+  class?: string;
+}
+
+const { art, class: className = '' } = Astro.props;
+
+// Break the board lines around every stone so unfilled stones remain legible
+// against whichever paper colour the surrounding section uses.
+const stones = [
+  { x: 94, y: 56, dark: true },
+  { x: 112, y: 74, dark: false },
+  { x: 76, y: 92, dark: true },
+  { x: 112, y: 110, dark: true },
+  { x: 130, y: 92, dark: false },
+  { x: 148, y: 128, dark: false },
+  { x: 166, y: 56, dark: true },
+];
+const boardLines = Array.from({ length: 7 }, (_, index) => {
+  const position = 58 + index * 18;
+  const horizontalY = 38 + index * 18;
+  const horizontalStones = stones
+    .filter(stone => stone.y === horizontalY)
+    .map(stone => stone.x)
+    .sort((a, b) => a - b);
+  const verticalStones = stones
+    .filter(stone => stone.x === position)
+    .map(stone => stone.y)
+    .sort((a, b) => a - b);
+  let x = 58;
+  let y = 38;
+  const horizontal = horizontalStones.map(stoneX => {
+    const segment = `M${x} ${horizontalY}H${stoneX - 9}`;
+    x = stoneX + 9;
+    return segment;
+  });
+  const vertical = verticalStones.map(stoneY => {
+    const segment = `M${position} ${y}V${stoneY - 9}`;
+    y = stoneY + 9;
+    return segment;
+  });
+  if (x < 166) horizontal.push(`M${x} ${horizontalY}H166`);
+  if (y < 146) vertical.push(`M${position} ${y}V146`);
+  return [...horizontal, ...vertical].join(' ');
+});
+---
+
+<svg
+  class={`four-arts four-arts--${art} ${className}`}
+  viewBox="0 0 240 180"
+  fill="none"
+  stroke="currentColor"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  focusable="false"
+>
+  {art === 'qin' && (
+    <g transform="rotate(-15 120 90)">
+      <path d="M27 107Q65 102 116 108T215 105L207 114Q121 121 35 117Z" fill="currentColor" fill-opacity=".07" stroke="none" />
+      <path d="M22 77Q24 69 38 68L64 70Q75 75 85 71L164 68Q174 73 184 67L209 66Q219 68 219 77L219 100Q218 109 207 110L183 107Q173 101 163 106L85 108Q75 104 63 109L36 110Q25 109 23 102Z" fill="currentColor" fill-opacity=".045" stroke-width="2.1" />
+      <path d="M24 100Q31 111 44 112L64 112Q76 107 86 112L162 110Q174 105 184 111L209 113Q219 111 219 101" stroke-width="1.3" opacity=".58" />
+      <path d="M40 73L40 104M207 71L207 106" stroke-width="3.2" />
+      {Array.from({ length: 7 }, (_, i) => (
+        <path d={`M41 ${77 + i * 3.8}Q123 ${75 + i * 3.9} 206 ${75 + i * 4.1}`} stroke-width={i === 0 || i === 6 ? '.95' : '.65'} opacity={.62 + i * .035} />
+      ))}
+      {[54, 65, 76, 88, 101, 114, 128, 141, 153, 165, 176, 186, 195].map(x => (
+        <circle cx={x} cy="72" r="1.05" fill="currentColor" stroke="none" opacity=".7" />
+      ))}
+      <path d="M31 74Q27 87 31 103M211 74L212 102" stroke-width="1.5" opacity=".28" />
+      <path d="M47 115Q42 127 51 133M53 116Q49 125 55 129M193 115L192 122" stroke-width="1.1" opacity=".55" />
+    </g>
+  )}
+
+  {art === 'qi' && (
+    <g transform="rotate(-7 120 90)">
+      <path d="M45 29L181 24L183 157L44 158Z" fill="currentColor" fill-opacity=".035" stroke-width="1.55" opacity=".8" />
+      <path d="M44 158L48 163L186 161L183 34M48 163L47 70" stroke-width=".9" opacity=".3" />
+      {boardLines.map(d => <path d={d} stroke-width=".8" opacity=".47" />)}
+      <circle cx="112" cy="92" r="1.65" fill="currentColor" stroke="none" opacity=".65" />
+      {stones.map(stone => (
+        <g>
+          <ellipse cx={stone.x + .7} cy={stone.y + 1.3} rx="8.4" ry="7.9" stroke="none" fill="currentColor" fill-opacity=".08" />
+          <circle cx={stone.x} cy={stone.y} r="7.8" fill={stone.dark ? 'currentColor' : 'none'} fill-opacity={stone.dark ? '.87' : undefined} stroke-width={stone.dark ? '.65' : '1.6'} />
+          {stone.dark && <path d={`M${stone.x - 4} ${stone.y - 3}Q${stone.x - 2} ${stone.y - 6} ${stone.x + 2} ${stone.y - 5}`} stroke-width=".65" stroke-opacity=".12" />}
+        </g>
+      ))}
+      <ellipse cx="206" cy="119" rx="16" ry="7" fill="currentColor" fill-opacity=".08" stroke-width="1.3" />
+      <path d="M190 119Q190 140 206 141Q221 139 222 119" stroke-width="1.8" />
+      <path d="M195 119Q200 113 206 119Q210 113 217 119" stroke-width="2.8" opacity=".8" />
+    </g>
+  )}
+
+  {art === 'shu' && (
+    <g>
+      <path d="M38 65L129 51L147 125L55 141Z" fill="currentColor" fill-opacity=".025" stroke-width="1.1" opacity=".6" />
+      <path d="M40 68L35 57Q33 51 40 50L124 36Q131 35 133 42L136 52M55 141L58 148L143 134Q151 132 147 125" stroke-width="1.7" opacity=".72" />
+      <path d="M41 54L127 40M62 145L143 132" stroke-width=".65" opacity=".42" />
+      <path d="M57 89Q67 82 80 83M63 97L81 94M74 79Q66 113 60 117M70 103L84 116M93 73L112 70M100 73L96 103M87 93L112 88M92 113Q107 105 118 108" stroke-width="2.7" opacity=".23" />
+      <path d="M169 119C184 115 208 119 213 131L211 145C205 157 169 161 157 146L155 134C155 127 159 122 169 119Z" fill="currentColor" fill-opacity=".12" stroke-width="1.8" />
+      <path d="M158 133C160 145 202 150 211 132M166 130C171 123 197 124 204 132C203 141 172 142 166 130Z" fill="currentColor" fill-opacity=".17" stroke-width="1.2" />
+      <g transform="rotate(-37 140 79)">
+        <path d="M136 26Q141 22 145 26L145 105L137 105Z" fill="currentColor" fill-opacity=".08" stroke-width="1.5" />
+        <path d="M138 27L138 102M139 35L143 35M139 95L143 95" stroke-width=".75" opacity=".5" />
+        <path d="M136 103L146 103L146 112L136 112Z" fill="currentColor" fill-opacity=".66" stroke-width=".8" />
+        <path d="M136 112Q130 126 141 143Q152 126 146 112Z" fill="currentColor" fill-opacity=".9" stroke-width="1" />
+        <path d="M137 115Q135 127 141 140" stroke-width=".8" opacity=".25" />
+        <path d="M139 24Q136 17 141 17Q147 18 143 24" stroke-width=".85" />
+      </g>
+      <path d="M38 156Q87 151 132 152" stroke-width="2.7" opacity=".09" />
+      <circle cx="150" cy="157" r="1.2" fill="currentColor" stroke="none" opacity=".3" />
+    </g>
+  )}
+
+  {art === 'hua' && (
+    <g transform="rotate(5 120 90)">
+      <path d="M77 27L113 12L153 27" stroke-width=".7" opacity=".48" />
+      <path d="M66 29L166 29L166 150L66 150Z" fill="currentColor" fill-opacity=".025" stroke-width="1.25" opacity=".72" />
+      <path d="M75 38L157 38L157 140L75 140Z" stroke-width=".6" opacity=".3" />
+      <path d="M78 113L92 87L101 101L115 64L127 85L136 76L154 110L154 122L79 127Z" fill="currentColor" fill-opacity=".085" stroke="none" />
+      <path d="M78 114Q84 103 92 89L100 100L115 65Q120 74 127 87L137 78L155 111" stroke-width="1.65" opacity=".67" />
+      <path d="M114 69L109 94L115 89L119 107M136 81L132 98L138 93L145 107M92 91L90 106" stroke-width="2.6" opacity=".31" />
+      <path d="M78 123Q97 109 119 120T154 119M82 130Q110 119 137 130M115 135L150 129" stroke-width="1.25" opacity=".42" />
+      <path d="M88 120L88 106M82 112L94 109M82 117L95 114" stroke-width="1.6" opacity=".62" />
+      <circle cx="141" cy="57" r="7" fill="currentColor" fill-opacity=".06" stroke="none" />
+      <path d="M60 27L172 27M60 30L172 30M60 149L173 149M59 153L173 153" stroke-width="2.1" />
+      <path d="M57 27L57 31M175 27L175 31M56 148L56 154M176 148L176 154" stroke-width="3.5" />
+      <path d="M113 155L113 163Q118 169 120 162L119 155" stroke-width=".9" opacity=".6" />
+      <path d="M180 55Q187 59 184 67M186 49L190 59" stroke-width="1.1" opacity=".13" />
+    </g>
+  )}
+</svg>

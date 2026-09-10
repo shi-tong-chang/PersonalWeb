@@ -43,7 +43,7 @@ function update(index: number, writeHash = true) {
   (document.querySelector('#progress-fill') as HTMLElement).style.width = `${((index + 1) / sections.length) * 100}%`;
   const next = document.querySelector<HTMLAnchorElement>('#next-chapter')!;
   next.href = `#${sections[(index + 1) % sections.length].id}`;
-  document.querySelector('#next-label')!.textContent = index === sections.length - 1 ? '回到開始' : '往下探索';
+  document.querySelector('#next-label')!.textContent = index === sections.length - 1 ? '重展此卷' : '向下展卷';
   document.querySelector('#next-arrow')!.textContent = index === sections.length - 1 ? '↑' : '↓';
   if (writeHash && location.hash !== `#${active.id}`) history.replaceState(null, '', `#${active.id}`);
 }

@@ -136,3 +136,71 @@ test('without JavaScript all chapters and navigation remain available', async ({
   await expect(page.locator('#contact')).toBeInViewport();
   await context.close();
 });
+
+test('ink landscape, four arts and chapter navigation remain available', async ({ page }) => {
+  await page.goto('./');
+  await expect.poll(() => page.locator('.hero-landscape').evaluate(image => {
+    const landscape = image as HTMLImageElement;
+    return landscape.complete && landscape.naturalWidth > 0;
+  }), { message: 'The main ink landscape must load successfully.' }).toBe(true);
+
+  await expect(page.locator('.four-arts-grid .art-card')).toHaveCount(4);
+  for (const art of ['qin', 'qi', 'shu', 'hua']) {
+    const symbol = page.locator(`.art-card[data-art="${art}"] svg.four-arts--${art}`);
+    await expect(symbol).toHaveCount(1);
+    await expect(symbol).toHaveAttribute('aria-hidden', 'true');
+  }
+
+  const navigation = page.getByRole('navigation', { name: '章節導覽' });
+  await expect(navigation).toBeVisible();
+  await expect(navigation.getByRole('link')).toHaveCount(4);
+  for (const [id, label] of [
+    ['about', '個人介紹'],
+    ['projects', '專案經歷'],
+    ['skills', '擅長技能'],
+    ['contact', '聯繫方式'],
+  ]) {
+    await expect(page.locator(`section.chapter#${id}`)).toHaveCount(1);
+    await expect(navigation.getByRole('link', { name: label })).toHaveAttribute('href', `#${id}`);
+  }
+});
+
+test('mobile skill headings and narrow tablet navigation fit without collisions', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('./#skills');
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  const headingLines = page.locator('#skills-heading .heading-line');
+  await expect(headingLines).toHaveCount(2);
+  const lines = await headingLines.evaluateAll(elements => elements.map(element => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      top: bounds.top,
+      bottom: bounds.bottom,
+      height: bounds.height,
+      lineHeight: parseFloat(getComputedStyle(element).lineHeight),
+    };
+  }));
+  for (const line of lines) {
+    expect(line.height).toBeGreaterThan(0);
+    expect(line.height).toBeLessThanOrEqual(line.lineHeight * 1.5);
+  }
+  expect(lines[1].top).toBeGreaterThanOrEqual(lines[0].bottom - 1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+  await page.setViewportSize({ width: 601, height: 900 });
+  await page.goto('./');
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await expect.poll(() => page.evaluate(() => {
+    const header = document.querySelector('.site-header')!.getBoundingClientRect();
+    const brand = document.querySelector('.brand')!.getBoundingClientRect();
+    const navigation = document.querySelector('.top-nav')!.getBoundingClientRect();
+    return brand.right <= navigation.left
+      && brand.left >= header.left
+      && navigation.right <= header.right
+      && brand.top >= header.top
+      && brand.bottom <= header.bottom
+      && navigation.top >= header.top
+      && navigation.bottom <= header.bottom
+      && document.documentElement.scrollWidth <= innerWidth;
+  }), { message: 'The brand and navigation must fit inside the 601px header without overlap or overflow.' }).toBe(true);
+});

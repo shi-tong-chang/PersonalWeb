@@ -1,8 +1,8 @@
 # PersonalWeb
 
-個人編輯誌風格的網站：個人介紹 → 專案經歷 → 擅長技能 → 聯繫方式。
+中式水墨風格的個人網站：個人介紹 → 專案經歷 → 擅長技能 → 聯繫方式。
 
-四幕共用暖白、墨黑與朱橘配色、幾何 S 識別、字體與格線。以姓名為首頁主角，搭配微動立體識別、作品預覽與簡潔的聯繫入口。
+以「知行之間」為題，四幕共用宣紙白、青墨與朱砂配色、原創水墨山水、書法題字與印章。琴、棋、書、畫串起涵養、布局、學識與創造力，透過卷軸作品、四藝插圖與月窗山景呈現多面向的個人形象。
 
 網站：https://shi-tong-chang.github.io/PersonalWeb/
 
@@ -30,10 +30,11 @@ npm run test:e2e
 - `profile.biography` 與 `skills` 的說明、標籤可留空，空值不顯示。現有短句為可替換的版型文案，未填入虛構經歷或技能。
 - 設定 `profile.email` 後，自動顯示寄信與複製 Email 功能。請只填願意公開的地址。
 - `src/styles/global.css`：全站設計變數、排版、響應式版型與動態效果。
-- `src/components/IdentityMark.astro`：可重用的幾何立體 S 識別。
+- `src/components/FourArts.astro`：琴、圍棋、筆硯與畫軸的可重用 SVG 插圖。
+- `public/assets/ink-landscape-v1.webp`：原創水墨主視覺，約 205 KB，全站共用。
+- `docs/art-direction.md`：美術方向與圖片生成提示詞。
 - `src/pages/index.astro`：網站結構。
 - `src/scripts/chapters.ts`：滾輪、鍵盤、章節導覽與手機版狀態。
-- `src/scripts/identity.ts`：主視覺與作品預覽的滑鼠視角微動。
 
 目前只展示本站這一個已知專案。加入更多作品或更長文案時，超出單幕的內容會自動啟用自然捲動，保持可讀。日後可再加入專案選擇器或詳情頁。
 
@@ -41,7 +42,7 @@ npm run test:e2e
 
 寬度至少 900px、高度至少 700px、具精確指標與 hover、未開啟減少動態效果，且內容能放入單幕時，使用 Swiper 整幕切換；支援滾輪、上下方向鍵、Page Up / Down、Home / End、導覽連結。章節 hash 可直接分享。
 
-手機、觸控平板、較矮視窗、長內容、減少動態效果與 JavaScript 不可用時，各章節以自然捲動呈現。插圖以 SVG/CSS 製作。字體透過 Google Fonts 載入，離線或載入失敗時使用系統字體。減少動態效果會關閉持續動畫與視角微動。
+手機、觸控平板、較矮視窗、長內容、減少動態效果與 JavaScript 不可用時，各章節以自然捲動呈現。水墨山水為 AI 生成的 WebP 圖片，其餘插圖、紙紋與卷軸以 SVG/CSS 製作。字體透過 Google Fonts 載入，離線或載入失敗時使用系統字體。減少動態效果會關閉轉場、模糊淡入與懸停動畫。
 
 ## GitHub Pages
 
