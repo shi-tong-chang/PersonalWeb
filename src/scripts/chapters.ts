@@ -121,7 +121,7 @@ document.addEventListener('click', event => {
 });
 
 document.addEventListener('keydown', event => {
-  if (!swiper || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  if (event.defaultPrevented || !swiper || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
   if ((event.target as Element).closest('input, textarea, select, button, [contenteditable="true"]')) return;
   const directions: Record<string, number> = { ArrowDown: activeIndex + 1, PageDown: activeIndex + 1, ArrowUp: activeIndex - 1, PageUp: activeIndex - 1, Home: 0, End: sections.length - 1 };
   if (!(event.key in directions)) return;
@@ -134,7 +134,7 @@ let wheelTotal = 0;
 let lastWheelAt = 0;
 let wheelConsumed = false;
 document.addEventListener('wheel', event => {
-  if (!swiper || event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+  if (event.defaultPrevented || !swiper || event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
   event.preventDefault();
   const now = performance.now();
   if (now - lastWheelAt > 180) {

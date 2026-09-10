@@ -1,6 +1,7 @@
 ---
-import { profile, projects, skills, copy, chapters } from '../data/profile';
+import { profile, skills, copy, chapters } from '../data/profile';
 import FourArts from '../components/FourArts.astro';
+import ProjectGallery from '../components/ProjectGallery.astro';
 import '../styles/global.css';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -53,18 +54,7 @@ const landscape = `${base}/assets/ink-landscape-v1.webp`;
 
         <section class="swiper-slide chapter projects" id="projects" aria-labelledby="projects-heading" tabindex="-1">
           <span class="watermark brush" aria-hidden="true">棋</span>
-          <div class="section-inner work-layout">
-            <div class="section-heading reveal"><p class="eyebrow">{copy.projects.eyebrow}</p><h2 id="projects-heading" class="brush">{copy.projects.heading[0]}<br />{copy.projects.heading[1]}</h2><p class="section-subtitle">{copy.projects.subtitle}</p><FourArts art="qi" class="chapter-symbol" /><p class="small-note">{copy.projects.footer}</p></div>
-            <div class="work-gallery">{projects.map(project => <article class="project reveal">
-              <a class="project-art" href={project.url} target="_blank" rel="noopener noreferrer" aria-label={`查看 ${project.name} GitHub 專案（另開分頁）`}>
-                <div class="scroll-roller roller-top" aria-hidden="true"></div>
-                <div class="project-painting"><img src={landscape} alt="水墨山水與松下琴亭，PersonalWeb 的視覺主題" width="1536" height="1024" loading="lazy" decoding="async" /><div class="painting-title"><span class="brush">知行之間</span><span class="painting-subtitle">一卷山水 · 一方天地</span><i class="seal" aria-hidden="true">作<br />品</i></div><span class="painting-index">作品 / {project.number}</span><span class="painting-link" aria-hidden="true">↗</span></div>
-                <div class="scroll-roller roller-bottom" aria-hidden="true"></div>
-              </a>
-              <div class="project-meta"><div><p class="eyebrow">{project.category} · {project.year}</p><h3>{project.name}</h3></div><a class="text-link project-link" href={project.url} target="_blank" rel="noopener noreferrer">{copy.projects.action}<span aria-hidden="true">↗</span><span class="sr-only">（另開分頁）</span></a></div>
-              <p class="project-description">{project.description}</p><ul class="tags" aria-label="專案技術">{project.tags.map(tag => <li>{tag}</li>)}</ul>
-            </article>)}</div>
-          </div>
+          <div class="section-inner projects-layout"><ProjectGallery /></div>
         </section>
 
         <section class="swiper-slide chapter skills" id="skills" aria-labelledby="skills-heading" tabindex="-1">

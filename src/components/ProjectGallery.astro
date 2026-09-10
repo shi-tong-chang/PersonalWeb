@@ -1,0 +1,66 @@
+---
+import { projects } from '../data/projects';
+import { copy } from '../data/profile';
+import FourArts from './FourArts.astro';
+import '../styles/projects.css';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const entries = projects.filter(project => project.visible);
+const asset = (path: string) => /^(https?:\/\/|data:)/i.test(path) ? path : `${base}/${path.replace(/^\/+/, '')}`;
+const number = (index: number) => String(index + 1).padStart(2, '0');
+---
+
+<div class="project-gallery" data-project-gallery>
+  <div class="gallery-heading">
+    <div><p class="eyebrow">{copy.projects.eyebrow}</p><h2 id="projects-heading" class="brush">{copy.projects.heading[0]}<span aria-hidden="true">，</span>{copy.projects.heading[1]}</h2></div>
+    <p class="gallery-motto">一局一世界<span></span>一作一足跡</p>
+  </div>
+
+  {entries.length ? <>
+    <div class="project-library">
+      <div class="library-caption"><span>作品拾錄<i></i><span data-project-current>01</span><span class="library-total"> / {number(entries.length - 1)}</span></span><span class="library-hint">點選閱覽<span class="hover-hint"> · 移至兩側，徐徐展卷</span><span class="touch-hint"> · 左右滑動</span></span></div>
+      <div class="project-rail">
+        <button type="button" class="project-edge edge-left" data-project-scroll="-1" aria-label="向左瀏覽專案" hidden><span aria-hidden="true">←</span></button>
+        <div class="project-track" data-project-track aria-label="專案選擇">
+          {entries.map((project, index) => <a class="project-tab" data-project-tab href={`#project-panel-${project.id}`} id={`project-tab-${project.id}`} aria-label={`作品 ${number(index)}：${project.name}${project.status === 'reserved' ? '（預留席位）' : ''}`}>
+            <span class="tab-art" aria-hidden="true">{project.cover ? <img src={asset(project.cover.src)} alt="" width="240" height="120" loading="lazy" decoding="async" /> : <span class="tab-blank"><span class="tab-brush">{project.status === 'reserved' ? '待' : '作'}</span><span class="tab-grid"></span></span>}<span class="tab-number">{number(index)}</span><span class="tab-stamp">{project.status === 'reserved' ? '待續' : '知行'}</span></span>
+            <span class="tab-label"><span>{project.name}</span><small>{project.status === 'reserved' ? '預留' : '收錄'}</small></span>
+          </a>)}
+        </div>
+        <button type="button" class="project-edge edge-right" data-project-scroll="1" aria-label="向右瀏覽專案" hidden><span aria-hidden="true">→</span></button>
+      </div>
+      <div class="library-baseline" aria-hidden="true"><span></span></div>
+      <p class="sr-only" data-project-status role="status" aria-live="polite" aria-atomic="true"></p>
+    </div>
+    <div class="project-stage">
+      {entries.map((project, index) => <article class="project-panel" id={`project-panel-${project.id}`} data-project-panel data-project-title={project.name} aria-labelledby={`project-title-${project.id}`}>
+        <div class="project-panel-motion">
+          <div class="project-story">
+            <div class="project-kicker"><span class="project-edition">作品 {number(index)}</span><span class:list={['project-state', { 'is-reserved': project.status === 'reserved' }]}>{project.status === 'reserved' ? '預留席位' : '已收錄'}</span></div>
+            <p class="project-category">{project.category}{project.year && ` / ${project.year}`}</p>
+            <h3 id={`project-title-${project.id}`} class:list={['project-name', { brush: project.status === 'reserved' }]}>{project.name}</h3>
+            <p class="project-poem">{project.subtitle}</p>
+            <p class="project-description">{project.description}</p>
+            {project.role && <p class="project-role">我的角色<span>{project.role}</span></p>}
+            {project.tags.length > 0 && <ul class="tags" aria-label={`${project.name} 專案技術`}>{project.tags.map(tag => <li>{tag}</li>)}</ul>}
+            <div class="project-actions">{project.status === 'published' ? project.links.map(link => <a class="text-link" href={link.href.startsWith('/') ? asset(link.href) : link.href} target="_blank" rel="noopener noreferrer">{link.label}<span aria-hidden="true">↗</span><span class="sr-only">（另開分頁）</span></a>) : <span class="project-waiting"><i aria-hidden="true"></i>此卷未題，敬候新作。</span>}</div>
+          </div>
+          <div class:list={['project-visual', { 'is-reserved': project.status === 'reserved' }]}>
+            <span class="visual-index" aria-hidden="true">{number(index)}</span>
+            <div class="project-scroll">
+              <div class="project-scroll-rod rod-top" aria-hidden="true"></div>
+              <div class="project-canvas">
+                {project.cover ? <img src={asset(project.cover.src)} alt={project.cover.alt} width="1536" height="1024" loading="lazy" decoding="async" style={{ 'object-fit': project.cover.fit ?? 'cover', 'object-position': project.cover.position ?? 'center' }} /> : <div class="project-blank" aria-hidden="true"><span class="blank-grid"></span><FourArts art="qi" class="blank-symbol" /><span class="blank-title brush">{project.status === 'reserved' ? '未題之作' : '作品預覽'}</span><span class="blank-subtitle">{project.status === 'reserved' ? '一方留白 · 萬般可能' : '專案圖像尚未提供'}</span></div>}
+                <div class="project-canvas-mark" aria-hidden="true"><span class="seal">{project.status === 'reserved' ? '待' : '知'}<br />{project.status === 'reserved' ? '續' : '行'}</span></div>
+              </div>
+              <div class="project-scroll-rod rod-bottom" aria-hidden="true"></div>
+            </div>
+            <div class="visual-caption" aria-hidden="true"><span>{project.status === 'reserved' ? 'BLANK CANVAS' : 'SELECTED WORK'}</span><span>第 {number(index)} 卷</span></div>
+          </div>
+        </div>
+      </article>)}
+    </div>
+  </> : <p class="gallery-empty">此卷留白，靜候新作。</p>}
+</div>
+
+<script src="../scripts/projects.ts"></script>

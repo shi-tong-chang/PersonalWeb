@@ -50,18 +50,6 @@ export const copy = {
   },
 };
 
-export const projects = [
-  {
-    number: '01',
-    name: 'PersonalWeb',
-    category: '個人網站',
-    year: '2026',
-    description: '以水墨為境、互動為線，將個人介紹、作品與思考，收進一卷持續生長的山水。',
-    tags: ['Astro', 'TypeScript', '互動設計'],
-    url: 'https://github.com/shi-tong-chang/PersonalWeb',
-  },
-];
-
 // These are positioning themes. Add verifiable tools / achievements in tags later.
 export const skills = [
   { number: '壹', art: 'qin', character: '琴', title: '感知與表達', description: '聽見細節，讓想法有共鳴。', tags: [] as string[] },

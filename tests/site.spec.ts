@@ -127,8 +127,9 @@ test('reduced motion and short viewports use readable native scrolling', async (
   await expect(page.locator('#contact')).toBeInViewport();
 });
 
-test('without JavaScript all chapters and navigation remain available', async ({ browser }) => {
+test('without JavaScript or web fonts all chapters and navigation remain available', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
+  await context.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4321/PersonalWeb/');
   await expect(page.locator('.chapter')).toHaveCount(4);
