@@ -1,159 +1,46 @@
 import { test, expect } from '@playwright/test';
 
-test('desktop wheel, keyboard, chapter links and deep links work', async ({ page }) => {
+const siteURL = 'http://127.0.0.1:4321/PersonalWeb/';
+
+test('the owner is the hero and the star-sea artwork loads without runtime errors', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('./');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://shi-tong-chang.github.io/PersonalWeb/');
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/PersonalWeb/favicon.svg');
-  await expect(page.locator('body')).toHaveClass(/is-paged/);
-  await page.mouse.move(700, 500);
-  await page.mouse.wheel(0, 180);
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
-  await expect(page.locator('#projects')).toBeInViewport();
-  await page.waitForTimeout(850);
-  await page.keyboard.press('ArrowDown');
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'skills');
-  await page.waitForTimeout(850);
-  await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'contact');
-  await expect(page.locator('#contact')).toBeInViewport();
-  await expect(page.getByRole('link', { name: /到 GitHub 找我/ })).toHaveAttribute('href', 'https://github.com/shi-tong-chang');
-  await page.waitForTimeout(850);
-  await page.locator('#next-chapter').click();
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'about');
-  await page.goto('./#skills');
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'skills');
-  await page.reload();
-  await expect(page.locator('#skills')).toBeInViewport();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/SHI-TONG\s*CHANG/);
+  const landscape = page.locator('.hero-scene img.hero-landscape');
+  await expect(landscape).toHaveAttribute('src', '/PersonalWeb/assets/star-sea-v1.webp');
+  await expect.poll(() => landscape.evaluate(element => {
+    const image = element as HTMLImageElement;
+    return image.complete && image.naturalWidth > 0;
+  }), { message: 'The star-sea hero artwork must load successfully.' }).toBe(true);
+  await expect(page.locator('.chapter')).toHaveCount(4);
+  await expect(page.locator('.chapter[inert]')).toHaveCount(0);
+  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
   expect(errors).toEqual([]);
 });
 
-test('trackpad wheel burst advances only one chapter', async ({ page }) => {
-  await page.goto('./');
-  await expect(page.locator('body')).toHaveClass(/is-paged/);
-  await page.mouse.move(700, 500);
-  for (let i = 0; i < 8; i++) await page.mouse.wheel(0, 80);
-  await page.waitForTimeout(850);
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
-});
-
-test('rapid chapter selection finishes on the latest destination with accessible focus', async ({ page }) => {
-  await page.goto('./');
-  await expect(page.locator('body')).toHaveClass(/is-paged/);
-  await page.evaluate(() => {
-    for (const index of [1, 2, 3]) {
-      document.querySelector<HTMLAnchorElement>(`nav [data-chapter="${index}"]`)!.click();
-    }
-  });
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'contact');
-  await expect(page.locator('#contact')).toBeFocused();
-  await expect(page.locator('#contact')).not.toHaveAttribute('inert');
-  await expect(page.locator('#about')).toHaveAttribute('inert');
-  await expect(page).toHaveURL(/#contact$/);
-  await page.waitForTimeout(750);
-  await page.keyboard.press('Home');
-  await expect(page.locator('#about')).toBeFocused();
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'about');
-});
-
-test('large touch screens retain native scrolling and chapter navigation', async ({ browser }) => {
-  const context = await browser.newContext({ hasTouch: true, viewport: { width: 1024, height: 1366 } });
-  const page = await context.newPage();
-  await page.goto('http://127.0.0.1:4321/PersonalWeb/');
-  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
-  await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).tap();
-  await expect(page.locator('#contact')).toBeInViewport();
-  await expect(page.locator('#contact')).toBeFocused();
-  await expect(page.locator('.chapter[inert]')).toHaveCount(0);
-  await context.close();
-});
-
-test('longer content switches to native scrolling and remains reachable', async ({ page }) => {
+test('desktop wheel and keyboard scrolling remain native instead of jumping chapters', async ({ page }) => {
   await page.goto('./');
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  await expect(page.locator('body')).toHaveClass(/is-paged/);
-  await page.locator('#projects .project-description').first().evaluate(element => {
-    // Extend the actual editable copy without changing the chapter's grid structure.
-    element.append(document.createTextNode('這是延長的專案介紹，補上背景、過程與實作心得。'.repeat(90)));
-    const lastLine = document.createElement('span');
-    lastLine.dataset.testid = 'extended-copy-end';
-    lastLine.style.display = 'block';
-    lastLine.textContent = '完整內容的最後一行';
-    element.append(lastLine);
-  });
-  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
+  await page.mouse.move(700, 500);
+  const start = await page.evaluate(() => scrollY);
+  await page.mouse.wheel(0, 180);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(start + 100);
+  await page.waitForTimeout(300);
+  const afterWheel = await page.evaluate(() => scrollY);
+  expect(afterWheel - start).toBeLessThan(350);
+  await expect(page.locator('#about')).toBeInViewport();
+  await page.keyboard.press('ArrowDown');
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(afterWheel);
+  expect(await page.evaluate(() => scrollY) - afterWheel).toBeLessThan(200);
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
-  const lastLine = page.getByTestId('extended-copy-end');
-  await lastLine.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
-  await expect.poll(() => lastLine.evaluate(element => {
-    const bounds = element.getBoundingClientRect();
-    const section = element.closest('.chapter')!.getBoundingClientRect();
-    const header = document.querySelector('.site-header')!.getBoundingClientRect();
-    const footer = document.querySelector('.site-footer')!.getBoundingClientRect();
-    return bounds.height > 0
-      && bounds.top >= Math.max(header.bottom, section.top)
-      && bounds.bottom <= Math.min(footer.top, section.bottom)
-      && bounds.left >= Math.max(0, section.left)
-      && bounds.right <= Math.min(innerWidth, section.right);
-  }), { message: 'The full final line must be inside its chapter and visible between the fixed header and footer.' }).toBe(true);
-  await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
-  await expect(page.locator('#contact')).toBeInViewport();
 });
 
-test('mobile keeps all content reachable without horizontal overflow', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test('chapter navigation, accessible focus, deep links and reload work', async ({ page }) => {
   await page.goto('./');
-  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
-  for (const id of ['about', 'projects', 'skills', 'contact']) {
-    await page.locator(`#${id}`).scrollIntoViewIfNeeded();
-    await expect(page.locator(`#${id}`)).toBeInViewport();
-    expect(await page.locator(`#${id}`).evaluate(element => element.hasAttribute('inert'))).toBe(false);
-  }
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('navigation').getByRole('link', { name: /個人介紹/ }).click();
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'about');
-});
-
-test('reduced motion and short viewports use readable native scrolling', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('./#contact');
-  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
-  await expect(page.locator('#contact')).toBeInViewport();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await expect(page.locator('body')).toHaveClass(/is-paged/);
-  await page.setViewportSize({ width: 1440, height: 600 });
-  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
-  await expect(page.locator('#contact')).toBeInViewport();
-});
-
-test('without JavaScript or web fonts all chapters and navigation remain available', async ({ browser }) => {
-  const context = await browser.newContext({ javaScriptEnabled: false });
-  await context.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
-  const page = await context.newPage();
-  await page.goto('http://127.0.0.1:4321/PersonalWeb/');
-  await expect(page.locator('.chapter')).toHaveCount(4);
-  await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
-  await expect(page.locator('#contact')).toBeInViewport();
-  await context.close();
-});
-
-test('ink landscape, four arts and chapter navigation remain available', async ({ page }) => {
-  await page.goto('./');
-  await expect.poll(() => page.locator('.hero-landscape').evaluate(image => {
-    const landscape = image as HTMLImageElement;
-    return landscape.complete && landscape.naturalWidth > 0;
-  }), { message: 'The main ink landscape must load successfully.' }).toBe(true);
-
-  await expect(page.locator('.four-arts-grid .art-card')).toHaveCount(4);
-  for (const art of ['qin', 'qi', 'shu', 'hua']) {
-    const symbol = page.locator(`.art-card[data-art="${art}"] svg.four-arts--${art}`);
-    await expect(symbol).toHaveCount(1);
-    await expect(symbol).toHaveAttribute('aria-hidden', 'true');
-  }
-
   const navigation = page.getByRole('navigation', { name: '章節導覽' });
-  await expect(navigation).toBeVisible();
   await expect(navigation.getByRole('link')).toHaveCount(4);
   for (const [id, label] of [
     ['about', '個人介紹'],
@@ -161,47 +48,225 @@ test('ink landscape, four arts and chapter navigation remain available', async (
     ['skills', '擅長技能'],
     ['contact', '聯繫方式'],
   ]) {
-    await expect(page.locator(`section.chapter#${id}`)).toHaveCount(1);
-    await expect(navigation.getByRole('link', { name: label })).toHaveAttribute('href', `#${id}`);
+    const link = navigation.getByRole('link', { name: label });
+    await expect(link).toHaveAttribute('href', `#${id}`);
+    await link.click();
+    await expect(page).toHaveURL(new RegExp(`#${id}$`));
+    await expect(page.locator(`#${id}`)).toBeFocused();
+    await expect(page.locator(`#${id}`)).toBeInViewport();
+    await expect(link).toHaveAttribute('aria-current', 'location');
+  }
+  await expect(page.locator('#contact a[href="https://github.com/shi-tong-chang"]')).toBeVisible();
+  await page.goto('./#skills');
+  await expect(page.locator('#skills')).toBeInViewport();
+  await page.reload();
+  await expect(page.locator('#skills')).toBeInViewport();
+  await expect(page).toHaveURL(/#skills$/);
+});
+
+test('rapid chapter selection finishes at the latest destination without hiding other sections', async ({ page }) => {
+  await page.goto('./');
+  await page.evaluate(() => {
+    for (const id of ['projects', 'skills', 'contact']) {
+      document.querySelector<HTMLAnchorElement>(`nav a[href="#${id}"]`)!.click();
+    }
+  });
+  await expect(page.locator('#contact')).toBeFocused();
+  await expect(page.locator('#contact')).toBeInViewport();
+  await expect(page).toHaveURL(/#contact$/);
+  await expect(page.locator('.chapter[inert]')).toHaveCount(0);
+});
+
+test('three featured projects clearly separate the real website from two reserved slots', async ({ page }) => {
+  await page.goto('./#projects');
+  const archive = page.locator('details#project-archive');
+  await expect(archive).not.toHaveAttribute('open');
+  const cards = page.locator('.featured-grid a.featured-card[data-project-open]');
+  await expect(cards).toHaveCount(3);
+  await expect(cards.first()).toHaveAttribute('data-project-open', 'personal-web');
+  await expect(cards.first()).toContainText('PersonalWeb');
+  await expect(cards.first()).not.toContainText('預留');
+  for (const card of await cards.all()) await expect(card).toHaveAttribute('href', '#project-archive');
+  for (const card of [cards.nth(1), cards.nth(2)]) await expect(card).toContainText('預留');
+});
+
+for (const height of [900, 600]) {
+  test(`each featured card opens its matching panel with visible keyboard focus at ${height}px height`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height });
+    await page.goto('./#projects');
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    const archive = page.locator('details#project-archive');
+    const cards = page.locator('.featured-grid a.featured-card[data-project-open]');
+    for (const card of await cards.all()) {
+      const id = await card.getAttribute('data-project-open');
+      await card.click();
+      await expect(archive).toHaveAttribute('open');
+      const tab = page.locator(`#project-tab-${id}`);
+      await expect(tab).toHaveAttribute('aria-selected', 'true');
+      await expect(tab).toBeFocused();
+      await expect(tab).toBeInViewport();
+      await expect.poll(() => tab.evaluate(element => {
+        const bounds = element.getBoundingClientRect();
+        const header = document.querySelector('.site-header')!.getBoundingClientRect();
+        return bounds.height > 0 && bounds.top >= header.bottom && bounds.bottom <= innerHeight
+          && bounds.left >= 0 && bounds.right <= innerWidth;
+      }), { message: `The focused ${id} tab must be fully visible below the header at 1440×${height}.` }).toBe(true);
+      await expect(page.locator(`#project-panel-${id}`)).toHaveAttribute('aria-hidden', 'false');
+      await expect(archive.getByRole('tabpanel')).toHaveCount(1);
+      await archive.locator(':scope > summary').click();
+      await expect(archive).not.toHaveAttribute('open');
+    }
+  });
+}
+
+test('long project copy remains reachable after the archive expands', async ({ page }) => {
+  await page.goto('./#projects');
+  const archive = page.locator('details#project-archive');
+  await archive.locator(':scope > summary').click();
+  await expect(archive).toHaveAttribute('open');
+  await archive.getByRole('tabpanel').locator('.project-description').evaluate(element => {
+    element.append(document.createTextNode('這是延長的專案介紹，補上背景、過程與實作心得。'.repeat(90)));
+    const lastLine = document.createElement('span');
+    lastLine.dataset.testid = 'extended-copy-end';
+    lastLine.style.display = 'block';
+    lastLine.textContent = '完整內容的最後一行';
+    element.append(lastLine);
+  });
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  const lastLine = page.getByTestId('extended-copy-end');
+  await lastLine.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await expect.poll(() => lastLine.evaluate(element => {
+    const bounds = element.getBoundingClientRect();
+    const section = element.closest('.chapter')!.getBoundingClientRect();
+    const header = document.querySelector('.site-header')!.getBoundingClientRect();
+    return bounds.height > 0
+      && bounds.top >= Math.max(header.bottom, section.top)
+      && bounds.bottom <= Math.min(innerHeight, section.bottom)
+      && bounds.left >= Math.max(0, section.left)
+      && bounds.right <= Math.min(innerWidth, section.right);
+  }), { message: 'The final line must be fully visible inside its section below the fixed header.' }).toBe(true);
+  await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
+  await expect(page.locator('#contact')).toBeInViewport();
+  await expect(page.locator('.chapter[inert]')).toHaveCount(0);
+});
+
+test('all sections and the archive fit phone, narrow tablet and desktop widths', async ({ page }) => {
+  await page.goto('./');
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  for (const viewport of [
+    { width: 320, height: 740 },
+    { width: 390, height: 844 },
+    { width: 601, height: 900 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const archive = page.locator('details#project-archive');
+    if ((await archive.getAttribute('open')) === null) await archive.locator(':scope > summary').click();
+    for (const id of ['about', 'projects', 'skills', 'contact']) {
+      await page.locator(`#${id}`).scrollIntoViewIfNeeded();
+      await expect(page.locator(`#${id}`)).toBeInViewport();
+    }
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+      { message: `No page-level horizontal overflow at ${viewport.width}px, including the expanded project archive.` }).toBe(true);
+    await expect.poll(() => page.evaluate(() => {
+      const header = document.querySelector('.site-header')!.getBoundingClientRect();
+      const brand = document.querySelector('.brand')!.getBoundingClientRect();
+      const navigation = document.querySelector('.top-nav')!.getBoundingClientRect();
+      const separated = brand.right <= navigation.left + 1 || brand.bottom <= navigation.top + 1
+        || navigation.right <= brand.left + 1 || navigation.bottom <= brand.top + 1;
+      return separated
+        && brand.left >= header.left
+        && navigation.right <= header.right
+        && brand.top >= header.top
+        && brand.bottom <= header.bottom
+        && navigation.top >= header.top
+        && navigation.bottom <= header.bottom;
+    }), { message: `The brand and navigation must not collide at ${viewport.width}px.` }).toBe(true);
   }
 });
 
-test('mobile skill headings and narrow tablet navigation fit without collisions', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('./#skills');
-  await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  const headingLines = page.locator('#skills-heading .heading-line');
-  await expect(headingLines).toHaveCount(2);
-  const lines = await headingLines.evaluateAll(elements => elements.map(element => {
-    const bounds = element.getBoundingClientRect();
-    return {
-      top: bounds.top,
-      bottom: bounds.bottom,
-      height: bounds.height,
-      lineHeight: parseFloat(getComputedStyle(element).lineHeight),
-    };
-  }));
-  for (const line of lines) {
-    expect(line.height).toBeGreaterThan(0);
-    expect(line.height).toBeLessThanOrEqual(line.lineHeight * 1.5);
+test('large touch screens retain native scrolling and accessible navigation', async ({ browser }) => {
+  const context = await browser.newContext({ hasTouch: true, viewport: { width: 1024, height: 1366 } });
+  const page = await context.newPage();
+  try {
+    await page.goto(siteURL);
+    await expect(page.locator('body')).not.toHaveClass(/is-paged/);
+    await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).tap();
+    await expect(page.locator('#contact')).toBeInViewport();
+    await expect(page.locator('#contact')).toBeFocused();
+    await expect(page.locator('.chapter[inert]')).toHaveCount(0);
+  } finally {
+    await context.close();
   }
-  expect(lines[1].top).toBeGreaterThanOrEqual(lines[0].bottom - 1);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
 
-  await page.setViewportSize({ width: 601, height: 900 });
+test('reduced motion disables hero animation and parallax without changing access to content', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./');
-  await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  await expect.poll(() => page.evaluate(() => {
-    const header = document.querySelector('.site-header')!.getBoundingClientRect();
-    const brand = document.querySelector('.brand')!.getBoundingClientRect();
-    const navigation = document.querySelector('.top-nav')!.getBoundingClientRect();
-    return brand.right <= navigation.left
-      && brand.left >= header.left
-      && navigation.right <= header.right
-      && brand.top >= header.top
-      && brand.bottom <= header.bottom
-      && navigation.top >= header.top
-      && navigation.bottom <= header.bottom
-      && document.documentElement.scrollWidth <= innerWidth;
-  }), { message: 'The brand and navigation must fit inside the 601px header without overlap or overflow.' }).toBe(true);
+  const landscape = page.locator('.hero-landscape');
+  const scene = page.locator('.hero-scene');
+  await expect(landscape).toHaveCSS('transform', 'none');
+  await expect(landscape).toHaveCSS('animation-name', 'none');
+  await expect(scene).toHaveCSS('transform', 'none');
+  await page.mouse.move(1050, 300);
+  await page.mouse.wheel(0, 240);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(150);
+  await expect(landscape).toHaveCSS('transform', 'none');
+  await expect(landscape).toHaveCSS('animation-name', 'none');
+  await expect(scene).toHaveCSS('transform', 'none');
+  await expect(page.locator('#about')).toHaveCSS('--scene-shift', '0px');
+  await expect(page.locator('#about')).toHaveCSS('--scene-scale', '1');
+  await expect(page.locator('#about')).toHaveCSS('--scene-opacity', '1');
+  await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
+  await expect(page.locator('#contact')).toBeInViewport();
+  await page.setViewportSize({ width: 1440, height: 600 });
+  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
+  await page.getByRole('navigation').getByRole('link', { name: /個人介紹/ }).click();
+  await expect(page.locator('#about')).toBeInViewport();
+});
+
+test('without JavaScript or web fonts native chapter navigation and details remain usable', async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  await context.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
+  const page = await context.newPage();
+  try {
+    await page.goto(siteURL);
+    await expect(page.locator('.chapter')).toHaveCount(4);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/SHI-TONG\s*CHANG/);
+    await page.getByRole('navigation').getByRole('link', { name: /專案經歷/ }).click();
+    // Wait for native smooth fragment scrolling before a no-JS actionability check.
+    await expect.poll(() => page.locator('#projects').evaluate(element => Math.abs(
+      element.getBoundingClientRect().top - parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop),
+    ))).toBeLessThanOrEqual(1);
+    const headerContrast = await page.locator('.site-header').evaluate(header => {
+      const values = (color: string) => color.match(/[\d.]+/g)!.map(Number);
+      const background = values(getComputedStyle(header).backgroundColor);
+      const underlay = values(getComputedStyle(document.querySelector('#projects')!).backgroundColor);
+      const alpha = background[3] ?? 1;
+      const backdrop = background.slice(0, 3).map((channel, index) => channel * alpha + underlay[index] * (1 - alpha));
+      const navigationLink = getComputedStyle(header.querySelector('nav a[href="#projects"]')!);
+      const opacity = parseFloat(navigationLink.opacity);
+      const foreground = values(navigationLink.color).slice(0, 3)
+        .map((channel, index) => channel * opacity + backdrop[index] * (1 - opacity));
+      const luminance = (channels: number[]) => channels.reduce((sum, channel, index) => {
+        const linear = channel / 255;
+        return sum + (linear <= 0.04045 ? linear / 12.92 : ((linear + 0.055) / 1.055) ** 2.4)
+          * [0.2126, 0.7152, 0.0722][index];
+      }, 0);
+      const [lighter, darker] = [luminance(foreground), luminance(backdrop)].sort((a, b) => b - a);
+      return { alpha, ratio: (lighter + 0.05) / (darker + 0.05) };
+    });
+    expect(headerContrast.alpha, 'Without JS, the header still needs an opaque backdrop over light sections.').toBeGreaterThanOrEqual(0.9);
+    expect(headerContrast.ratio, 'The unfocused navigation label must retain readable contrast without JS.').toBeGreaterThanOrEqual(4.5);
+    const archive = page.locator('details#project-archive');
+    await expect(archive).not.toHaveAttribute('open');
+    await archive.locator(':scope > summary').click();
+    await expect(archive).toHaveAttribute('open');
+    await expect(archive.locator('[data-project-panel]')).toHaveCount(10);
+    await expect(archive.locator('[data-project-panel][inert]')).toHaveCount(0);
+    await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
+    await expect(page.locator('#contact')).toBeInViewport();
+  } finally {
+    await context.close();
+  }
 });

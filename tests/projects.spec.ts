@@ -5,9 +5,14 @@ const siteURL = 'http://127.0.0.1:4321/PersonalWeb/';
 async function openProjects(page: Page) {
   await page.goto(`${siteURL}#projects`);
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  const archive = page.locator('details#project-archive');
+  await expect(archive).not.toHaveAttribute('open');
+  await archive.locator(':scope > summary').click();
+  await expect(archive).toHaveAttribute('open');
   await expect(page.locator('[data-project-gallery]')).toHaveClass(/is-enhanced/);
-  await expect(page.locator('#projects')).not.toHaveAttribute('inert');
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
+  await page.locator('[data-project-track]').evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await expect(page.locator('.chapter[inert]')).toHaveCount(0);
+  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
 }
 
 async function scrollLeft(track: Locator) {
@@ -26,6 +31,7 @@ test('ten project slots expose one accessible panel and clearly mark nine reserv
   await openProjects(page);
   const gallery = page.locator('[data-project-gallery]');
   const tabs = gallery.getByRole('tab');
+  await expect(gallery.getByRole('heading', { level: 3 })).toHaveAttribute('id', 'archive-heading');
   await expect(tabs).toHaveCount(10);
   await expect(gallery.locator('[data-project-panel]')).toHaveCount(10);
   await expect(gallery.locator('.project-state.is-reserved')).toHaveCount(9);
@@ -65,9 +71,34 @@ test('rapid project clicks finish on the latest selection without queued transit
   expect(errors).toEqual([]);
 });
 
+test('project panel deep links survive reload and later hash changes', async ({ page }) => {
+  await page.goto(`${siteURL}#project-panel-project-10`);
+  const gallery = page.locator('[data-project-gallery]');
+  const archive = page.locator('details#project-archive');
+  await expect(gallery).toHaveClass(/is-enhanced/);
+
+  async function expectLinkedProject(id: string) {
+    await expect(archive).toHaveAttribute('open');
+    const tab = page.locator(`#project-tab-${id}`);
+    const panel = page.locator(`#project-panel-${id}`);
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    await expectTabInsideTrack(tab);
+    await expect(gallery.getByRole('tabpanel')).toHaveCount(1);
+    await expect(gallery.getByRole('tabpanel')).toHaveAttribute('id', `project-panel-${id}`);
+    await expect(panel).not.toHaveAttribute('inert');
+    await expect(panel.locator('h4.project-name')).toBeInViewport();
+    await expect(page).toHaveURL(new RegExp(`#project-panel-${id}$`));
+  }
+
+  await expectLinkedProject('project-10');
+  await page.reload();
+  await expectLinkedProject('project-10');
+  await page.evaluate(() => { location.hash = '#project-panel-project-02'; });
+  await expectLinkedProject('project-02');
+});
+
 test('project Home and End keys reveal their tabs without navigating chapters', async ({ page }) => {
   await openProjects(page);
-  await expect(page.locator('body')).toHaveClass(/is-paged/);
   const tabs = page.locator('[data-project-gallery]').getByRole('tab');
   await tabs.first().focus();
   await page.keyboard.press('End');
@@ -127,12 +158,12 @@ test('edge hover scrolls smoothly, stops on leave, and respects both boundaries'
   expect(await scrollLeft(track)).toBeLessThanOrEqual(2);
 });
 
-test('horizontal and shift wheel stay within the rail while vertical wheel advances chapters', async ({ page }) => {
+test('horizontal and shift wheel stay within the rail while vertical wheel scrolls the page naturally', async ({ page }) => {
   await openProjects(page);
-  await expect(page.locator('body')).toHaveClass(/is-paged/);
   const track = page.locator('[data-project-track]');
   await track.hover();
   const start = await scrollLeft(track);
+  const pageStart = await page.evaluate(() => scrollY);
   await page.mouse.wheel(170, 0);
   await expect.poll(() => scrollLeft(track)).toBeGreaterThan(start + 50);
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
@@ -144,15 +175,17 @@ test('horizontal and shift wheel stay within the rail while vertical wheel advan
   await expect.poll(() => scrollLeft(track)).toBeGreaterThan(afterHorizontal + 50);
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
   await expect(page).toHaveURL(/#projects$/);
+  expect(Math.abs(await page.evaluate(() => scrollY) - pageStart)).toBeLessThanOrEqual(2);
 
   await page.mouse.wheel(0, 180);
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'skills');
-  await expect(page).toHaveURL(/#skills$/);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(pageStart + 100);
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => scrollY) - pageStart).toBeLessThan(350);
+  await expect(page.locator('#projects')).toBeInViewport();
 });
 
 test('a non-overflowing project rail never leaks shift wheel into chapter navigation', async ({ page }) => {
   await openProjects(page);
-  await expect(page.locator('body')).toHaveClass(/is-paged/);
   const track = page.locator('[data-project-track]');
   await track.evaluate(element => {
     // Model a collection small enough to fit, without changing its scroll handler.
@@ -160,12 +193,14 @@ test('a non-overflowing project rail never leaks shift wheel into chapter naviga
   });
   await expect(page.locator('[data-project-scroll="1"]')).toBeHidden();
   await track.hover();
+  const pageStart = await page.evaluate(() => scrollY);
   await page.keyboard.down('Shift');
   await page.mouse.wheel(0, 180);
   await page.keyboard.up('Shift');
   await page.waitForTimeout(750);
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
   await expect(page).toHaveURL(/#projects$/);
+  expect(Math.abs(await page.evaluate(() => scrollY) - pageStart)).toBeLessThanOrEqual(2);
 });
 
 test('mobile touch controls reach the tenth project without page overflow', async ({ browser }) => {
@@ -226,6 +261,14 @@ test('without JavaScript or web fonts all ten project articles remain readable i
   const page = await context.newPage();
   try {
     await page.goto(`${siteURL}#projects`);
+    // Native fragment scrolling can still be moving after the document loads.
+    await expect.poll(() => page.locator('#projects').evaluate(element => Math.abs(
+      element.getBoundingClientRect().top - parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop),
+    ))).toBeLessThanOrEqual(1);
+    const archive = page.locator('details#project-archive');
+    await expect(archive).not.toHaveAttribute('open');
+    await archive.locator(':scope > summary').click();
+    await expect(archive).toHaveAttribute('open');
     const gallery = page.locator('[data-project-gallery]');
     await expect(gallery).not.toHaveClass(/is-enhanced/);
     const panels = gallery.getByRole('article');
@@ -233,8 +276,8 @@ test('without JavaScript or web fonts all ten project articles remain readable i
     await expect(gallery.locator('[data-project-panel][inert]')).toHaveCount(0);
     for (const panel of await panels.all()) {
       await expect(panel).toBeVisible();
-      await panel.locator('h3').scrollIntoViewIfNeeded();
-      await expect(panel.locator('h3')).toBeInViewport();
+      await panel.locator('h4.project-name').scrollIntoViewIfNeeded();
+      await expect(panel.locator('h4.project-name')).toBeInViewport();
     }
     await expect(panels.last()).toHaveAccessibleName('專案 10');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

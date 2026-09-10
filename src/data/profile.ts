@@ -1,59 +1,56 @@
-// Main copy lives here. Four arts are a visual metaphor, not a list of credentials.
-// Replace the display name and optional biography with your preferred wording.
+// Editable starter copy, not claims about unprovided credentials or experience.
 export const profile = {
   name: 'shi-tong-chang',
   displayName: ['SHI-TONG', 'CHANG'],
   monogram: 'STC',
-  title: '心有丘壑，行無疆界。',
-  introduction: '理性落子，感性成詩。於不同領域之間，探尋屬於自己的答案。',
+  title: '讓想像有形，讓作品有溫度。',
+  introduction: '你好，我是 Shi-Tong。喜歡探索不同領域，也喜歡把腦海裡的風景，一步步做成能被看見、被使用的作品。',
   biography: '',
   github: 'https://github.com/shi-tong-chang',
   email: '',
 };
 
 export const chapters = [
-  { id: 'about', label: '個人介紹', art: 'qin', character: '琴', number: '壹', subtitle: '聽弦 · 識人' },
-  { id: 'projects', label: '專案經歷', art: 'qi', character: '棋', number: '貳', subtitle: '觀局 · 落子' },
-  { id: 'skills', label: '擅長技能', art: 'shu', character: '書', number: '參', subtitle: '問學 · 致用' },
-  { id: 'contact', label: '聯繫方式', art: 'hua', character: '畫', number: '肆', subtitle: '留白 · 相逢' },
+  { id: 'about', label: '個人介紹', number: '01' },
+  { id: 'projects', label: '專案經歷', number: '02' },
+  { id: 'skills', label: '擅長技能', number: '03' },
+  { id: 'contact', label: '聯繫方式', number: '04' },
 ] as const;
 
 export const copy = {
-  siteName: '知行之間',
+  siteName: 'A Personal Universe',
   about: {
-    eyebrow: '山水為序 · 知行為章',
-    heading: ['心有丘壑', '行無疆界'],
-    action: '展卷，見作品',
-    secondaryAction: '與我相識',
-    signature: '琴棋書畫，皆為修行。知行之間，自有天地。',
+    eyebrow: 'A PERSONAL UNIVERSE',
+    action: '探索我的作品',
+    secondaryAction: '認識更多',
+    signature: '在想像與實作之間，探索自己的可能。',
   },
   projects: {
-    eyebrow: '貳 · 棋 / 專案經歷',
-    heading: ['落子有思', '行而有成'],
-    subtitle: '一局一世界，一作一足跡。',
+    eyebrow: '01 / SELECTED WORK',
+    heading: ['讓想像', '成為作品。'],
+    subtitle: '從一個念頭出發，留下每一次探索與實作的軌跡。',
     action: '查看 GitHub 專案',
-    footer: '將思考落在實處，讓作品替自己說話。',
+    footer: '作品持續累積中，其餘位置留給下一次探索。',
   },
   skills: {
-    eyebrow: '參 · 書 / 擅長技能',
-    heading: ['不囿一藝', '融會於心'],
-    subtitle: '以四藝為引，連結感知、思辨、學習與創造。',
-    note: '具體專長與經歷，將在此逐步展開。',
+    eyebrow: '02 / WAYS OF THINKING',
+    heading: ['不只一種視角', '也不只一種可能。'],
+    subtitle: '感性讓我開始，理性讓我走得更遠。',
+    note: '這裡先放探索方向，具體技能與經歷會隨作品逐步補上。',
   },
   contact: {
-    eyebrow: '肆 · 畫 / 聯繫方式',
-    heading: ['山水有相逢', '留白待知音'],
-    title: '下一幅風景，不妨一同落筆。',
-    introduction: '聊一個想法，談一次合作，或只是道一聲好。',
+    eyebrow: '03 / THE NEXT CHAPTER',
+    heading: ['下一個故事', '從一次對話開始。'],
+    introduction: '聊一個想法、交換一點靈感，或只是打聲招呼。期待在這片星海，與你相遇。',
     action: '到 GitHub 找我',
-    signature: '卷有盡，意無窮。',
+    signature: 'STAY CURIOUS. KEEP CREATING.',
   },
 };
 
-// These are positioning themes. Add verifiable tools / achievements in tags later.
+// Positioning themes only. Add your verifiable skills and tools in tags later.
 export const skills = [
-  { number: '壹', art: 'qin', character: '琴', title: '感知與表達', description: '聽見細節，讓想法有共鳴。', tags: [] as string[] },
-  { number: '貳', art: 'qi', character: '棋', title: '思辨與布局', description: '看見全局，也走好眼前一步。', tags: [] as string[] },
-  { number: '參', art: 'shu', character: '書', title: '學習與沉澱', description: '在求知中積累，在實作中融會。', tags: [] as string[] },
-  { number: '肆', art: 'hua', character: '畫', title: '想像與創造', description: '於留白之處，描繪新的可能。', tags: [] as string[] },
+  { number: '01', english: 'INTERFACE & INTERACTION', title: '介面與互動', description: '關注使用的感受，也在意每一個恰到好處的細節。', tags: [] as string[] },
+  { number: '02', english: 'SYSTEMS & LOGIC', title: '系統與邏輯', description: '拆解問題、理解結構，讓想法有清晰的實作路徑。', tags: [] as string[] },
+  { number: '03', english: 'VISUAL & STORY', title: '視覺與敘事', description: '用畫面和節奏，讓作品不只是功能，也留下一點感受。', tags: [] as string[] },
+  { number: '04', english: 'EXPLORE & BUILD', title: '探索與實作', description: '保持好奇，試著把陌生的事，變成下一件做得到的事。', tags: [] as string[] },
 ] as const;

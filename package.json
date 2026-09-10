@@ -11,8 +11,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "astro": "^7.3.1",
-    "swiper": "^14.2.0"
+    "astro": "^7.3.1"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

@@ -10,6 +10,7 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   const track = trackElement;
 
   const chapter = gallery.closest<HTMLElement>('.chapter');
+  const archive = gallery.closest<HTMLDetailsElement>('details');
   const current = gallery.querySelector<HTMLElement>('[data-project-current]');
   const status = gallery.querySelector<HTMLElement>('[data-project-status]');
   let selected = 0;
@@ -20,6 +21,8 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   let hoverIntensity = 0.65;
   let previousFrame = 0;
   let visible = false;
+  let openFrame = 0;
+  let layoutFrame = 0;
 
   const maximumScroll = () => Math.max(0, track.scrollWidth - track.clientWidth);
 
@@ -33,7 +36,7 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
 
   function canHover() {
     return projectHover.matches && !projectReducedMotion.matches && visible &&
-      !document.hidden && !chapter?.inert;
+      !document.hidden && !chapter?.inert && (!archive || archive.open);
   }
 
   function updateEdges() {
@@ -54,6 +57,8 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   }
 
   function keepTabVisible(index: number, instant = false) {
+    // Closed details have no usable rail geometry. Restore the selection on open.
+    if (!track.clientWidth) return;
     const trackBounds = track.getBoundingClientRect();
     const tabBounds = tabs[index].getBoundingClientRect();
     // Move only the horizontal rail: scrollIntoView would also move the chapter.
@@ -231,6 +236,10 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
 
   const stopMotion = () => {
     stopHover();
+    cancelAnimationFrame(openFrame);
+    cancelAnimationFrame(layoutFrame);
+    openFrame = 0;
+    layoutFrame = 0;
     entrance?.cancel();
     entrance = undefined;
     track.scrollTo({ left: track.scrollLeft, behavior: 'instant' });
@@ -242,7 +251,60 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   window.addEventListener('pagehide', stopMotion);
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopMotion(); });
 
+  archive?.addEventListener('toggle', () => {
+    if (!archive.open) return stopMotion();
+    cancelAnimationFrame(layoutFrame);
+    layoutFrame = requestAnimationFrame(() => {
+      layoutFrame = 0;
+      if (!archive.open) return;
+      keepTabVisible(selected, true);
+      updateEdges();
+    });
+  });
+
+  // Featured cards are ordinary archive links without JavaScript. Enhancement
+  // opens the collection and takes keyboard users straight to the requested work.
+  document.addEventListener('click', event => {
+    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey ||
+      event.metaKey || event.altKey || event.shiftKey) return;
+    const link = event.target instanceof Element
+      ? event.target.closest<HTMLAnchorElement>('a[data-project-open]') : null;
+    if (!link) return;
+    const index = tabs.findIndex(tab => tab.dataset.projectId === link.dataset.projectOpen);
+    if (index < 0) return;
+    event.preventDefault();
+    if (archive) archive.open = true;
+    cancelAnimationFrame(openFrame);
+    openFrame = requestAnimationFrame(() => {
+      openFrame = 0;
+      if (archive && !archive.open) return;
+      select(index, true, false);
+      updateEdges();
+      // Show the stage and rail together when they fit. On shorter screens the
+      // focused tab must still be visible, rather than sitting below the fold.
+      const topInset = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+      const galleryTop = gallery.getBoundingClientRect().top + scrollY;
+      const tabBottom = tabs[index].getBoundingClientRect().bottom + scrollY;
+      window.scrollTo({
+        top: Math.max(0, galleryTop - topInset, tabBottom - innerHeight + 24),
+        behavior: projectReducedMotion.matches ? 'instant' : 'smooth',
+      });
+    });
+  });
+
+  function restoreHashProject() {
+    const index = panels.findIndex(panel => '#' + panel.id === location.hash);
+    if (index < 0) return false;
+    if (archive) archive.open = true;
+    select(index, false, false);
+    updateEdges();
+    return true;
+  }
+
   gallery.classList.add('is-enhanced');
-  select(0, false, false);
+  // A modified click can open a panel link in a new tab. Never hide that target
+  // behind the first project when enhancing the browser's native fragment jump.
+  if (!restoreHashProject()) select(0, false, false);
+  window.addEventListener('hashchange', restoreHashProject);
   updateEdges();
 });

@@ -1,10 +1,8 @@
 # PersonalWeb
 
-中式水墨風格的個人網站：個人介紹 → 專案經歷 → 擅長技能 → 聯繫方式。
+星海敘事系個人網站：安靜的深藍夜海開場，往下接清楚可讀的專案、探索方向與聯繫方式。
 
-以「知行之間」為題，四幕共用宣紙白、青墨與朱砂配色、原創水墨山水、書法題字與印章。琴、棋、書、畫串起涵養、布局、學識與創造力，透過卷軸作品、四藝插圖與月窗山景呈現多面向的個人形象。
-
-網站：https://shi-tong-chang.github.io/PersonalWeb/
+目前工作分支是 `feat/project-showcase`。星海版尚未合併至 `main`；[正式網站](https://shi-tong-chang.github.io/PersonalWeb/) 在 main 部署前仍可能是先前的水墨版。
 
 ## 開發
 
@@ -24,41 +22,37 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-## 修改內容
+## 內容與結構
 
-- `src/data/profile.ts`：姓名、介紹、章節文案、技能、GitHub、Email。顯示姓名目前取自 GitHub 帳號，可改為偏好的姓名。
-- `src/data/projects.ts`：10 個專案資料位置與 `Project` 型別；可繼續追加，沒有數量上限。
-- `profile.biography` 與 `skills` 的說明、標籤可留空，空值不顯示。現有短句為可替換的版型文案，未填入虛構經歷或技能。
-- 設定 `profile.email` 後，自動顯示寄信與複製 Email 功能。請只填願意公開的地址。
-- `src/styles/global.css`：全站設計變數、排版、響應式版型與動態效果。
-- `src/components/FourArts.astro`：琴、圍棋、筆硯與畫軸的可重用 SVG 插圖。
-- `src/components/ProjectGallery.astro`：專案主舞台、縮圖列及無 JavaScript 降級版。
-- `src/styles/projects.css`、`src/scripts/projects.ts`：專案展示的響應式版型、切換動畫、懸停捲動及鍵盤操作。
-- `public/assets/ink-landscape-v1.webp`：原創水墨主視覺，約 205 KB，全站共用。
-- `docs/art-direction.md`：美術方向與圖片生成提示詞。
-- `src/pages/index.astro`：網站結構。
-- `src/scripts/chapters.ts`：滾輪、鍵盤、章節導覽與手機版狀態。
+- `src/data/profile.ts`：姓名、介紹、技能／探索方向、章節文案、GitHub 與 Email。現有短句是可替換的版型文案，不是未提供的經歷或成就。
+- `src/data/projects.ts`：10 個可編輯的專案位置，可任意追加；`visible` 控制顯示，`featured` 控制首頁精選（取前 3 件）。目前 1 件真實作品、9 個明確標示的預留位置。
+- `src/pages/index.astro`：首頁 → 3 件精選 → 可展開作品庫 → 探索方向 → 聯繫方式。
+- `src/components/ProjectGallery.astro`、`src/styles/projects.css`、`src/scripts/projects.ts`：完整作品庫的主舞台、水平選擇列、鍵盤／懸停互動。
+- `src/styles/global.css`：全站色彩、字型、版型、手機裁切與少量星光動態。
+- `src/scripts/chapters.ts`：原生錨點焦點、導覽狀態、事件驅動的場景退移與可選的 Email 複製。
+- `public/assets/star-sea-v1.webp`：原創夜海主視覺，1672 × 941，約 97 KB；首頁、作品卡與頁尾共用。
+- [美術與完整生成提示詞](docs/star-sea-art-direction.md)、[專案編輯指南](docs/projects.md)。
 
-目前有 1 件真實作品（PersonalWeb）和 9 個明確標示的預留席位。預留項目不會產生虛構的經歷或可點擊的假連結。新增方式與各欄位請見 [專案編輯指南](docs/projects.md)。
+`profile.biography` 與 `profile.email` 可留空。設定 Email 後會顯示寄信與複製功能，請只放願意公開的地址。具體技能可填在 `skills` 的標籤與說明。
 
-專案採「左側介紹、右側主視覺、底部縮圖列」；手機將縮圖列提前，切換後可直接向下閱讀。點選才切換主舞台，懸停只高亮選項；滑鼠移入兩側箭頭則平滑捲動整列，離開、切換章節或視窗失焦立即停止。觸控可原生左右滑動，也能點按兩側箭頭。支援 ← / →、Home / End 和空白鍵選取，橫向或 Shift 滾輪只操作專案列，普通垂直滾輪仍切換網站章節。
+## 互動與降級
 
-各面板保留一致舞台高度，快速選擇只保留最後一次操作，不排隊播放動畫；使用 transform / opacity，沒有額外動畫框架。長文案仍會自動啟用整頁自然捲動，不截斷內容。減少動態效果時停用懸停自動捲動與切換動畫，但保留明確點按。JavaScript 不可用時，全部作品自然排列，選擇列保留錨點連結。
+所有裝置皆為原生連續捲動，不攔截垂直滾輪、不強制整幕切頁。首頁插畫隨捲動略微退移淡出，姓名與文案保持原生文字；只有 3 個微小星光點持續淡明，離屏或背景分頁時暫停。不使用 WebGL 或動畫框架。
 
-## 操作與降級
+首頁精選卡開啟完整作品庫並選中對應作品；完整作品庫以原生 `details` 控制展開。左右邊緣懸停可平滑捲動專案列，離開、到達邊界、關閉作品庫或視窗失焦時停止。觸控可直接左右滑動；鍵盤支援 ← / →、Home / End、空白鍵。水平滾輪與 Shift＋滾輪只操作專案列，普通垂直滾輪保持頁面捲動。
 
-寬度至少 900px、高度至少 700px、具精確指標與 hover、未開啟減少動態效果，且內容能放入單幕時，使用 Swiper 整幕切換；支援滾輪、上下方向鍵、Page Up / Down、Home / End、導覽連結。章節 hash 可直接分享。
+快速選取只保留最後一次操作，不堆疊動畫。減少動態效果會停用場景退移、星光、轉場與懸停自動捲動，保留點按和鍵盤操作。JavaScript 不可用時，章節和原生導覽照常可用，手動展開作品庫後能閱讀全部作品。長文不截斷。
 
-手機、觸控平板、較矮視窗、長內容、減少動態效果與 JavaScript 不可用時，各章節以自然捲動呈現。水墨山水為 AI 生成的 WebP 圖片，其餘插圖、紙紋與卷軸以 SVG/CSS 製作。字體透過 Google Fonts 載入，離線或載入失敗時使用系統字體。減少動態效果會關閉轉場、模糊淡入與懸停動畫。
+字型使用 Google Fonts 的 DM Sans 與 Noto Sans TC；離線或載入失敗時退回系統字型。主視覺為內建 imagegen 生成，其餘星芒、軌道圖形與框線為 SVG／CSS。舊水墨資產與美術文件保留作歷史參考，星海版沒有引用。
 
 ## GitHub Pages
 
-`main` 推送會觸發 `.github/workflows/deploy.yml`：安裝套件、型別檢查、建置、瀏覽器測試及部署。儲存庫 Settings → Pages → Source 使用 **GitHub Actions**。
+`main` 推送才會觸發 `.github/workflows/deploy.yml`：安裝套件、型別檢查、建置、瀏覽器測試及部署。功能分支推送不會覆蓋正式網站。儲存庫 Settings → Pages → Source 使用 **GitHub Actions**。
 
-`astro.config.mjs` 已設定 `site: https://shi-tong-chang.github.io` 與 `base: /PersonalWeb`。更換儲存庫名稱或網域時須同步修改。
+`astro.config.mjs` 設定 `site: https://shi-tong-chang.github.io` 與 `base: /PersonalWeb`。更換儲存庫名稱或網域時須同步修改。
 
 ## 後續擴充
 
-1. 補齊個人介紹、真實經歷、技能與公開 Email。
-2. 替換預留專案、加入真實封面與作品詳情連結。
-3. 視需要加入文章、中英切換與分享預覽圖。
+1. 補齊自己的個人介紹、具體技能、經歷與聯繫資訊。
+2. 以真實專案取代預留位置，加入封面、技術選擇、成果與程式碼連結。
+3. 依需求加入專案詳情頁、創作實驗室、文章或中英切換。
