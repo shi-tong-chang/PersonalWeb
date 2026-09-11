@@ -73,21 +73,9 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c4
 .hero-shade { position: absolute; inset: 0; background: linear-gradient(90deg, #070d1ccc 0%, #070d1c91 35%, #070d1c19 70%), linear-gradient(0deg, #070d1c 0%, #070d1c24 28%, #070d1c00 76%, #070d1c50); pointer-events: none; }
 .about-layout { z-index: 2; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr); align-items: center; gap: clamp(32px, 6vw, 96px); }
 .hero-copy { width: 100%; max-width: 650px; min-width: 0; }
-.about .eyebrow { margin-bottom: 28px; }
-.hero-title { font: 400 clamp(70px, 8vw, 126px)/.93 var(--display); letter-spacing: -.04em; }
-.hero-title > span { display: block; white-space: nowrap; }
-.hero-title > span + span { margin-top: 8px; color: var(--accent); }
-.hero-title i { font-style: normal; color: var(--lilac); }
 .hero-tagline { font-size: clamp(18px, 1.55vw, 24px); font-weight: 400; letter-spacing: .11em; line-height: 1.8; margin-top: 29px; }
 .hero-introduction, .biography { max-width: 390px; font-size: 14px; color: var(--muted); line-height: 2.1; margin-top: 15px; letter-spacing: .025em; }
 .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 30px; margin-top: 30px; }
-.hero-colophon { position: absolute; z-index: 2; bottom: calc(var(--dock-height) + 25px); left: var(--gutter); right: var(--gutter); display: flex; justify-content: space-between; align-items: center; gap: 25px; padding-top: 20px; border-top: 1px solid var(--line); }
-.scroll-cue { display: inline-flex; align-items: center; gap: 17px; font-size: 8px; letter-spacing: .16em; color: #d2d9e6; }
-.scroll-cue > span:last-child { font-size: 16px; margin-left: 6px; }
-.scroll-cue-line { width: 1px; height: 22px; background: linear-gradient(#d9c09311, #d9c093); }
-.hero-colophon > p { font-size: 11px; letter-spacing: .13em; color: var(--muted); }
-.scene-label { display: flex; align-items: center; gap: 13px; font-size: 8px; letter-spacing: .15em; color: var(--muted); }
-.scene-label i { width: 20px; height: 1px; background: #a7b3c66b; }
 .scene-stars { position: absolute; inset: 0; pointer-events: none; }
 .scene-stars i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #e1d6fa; box-shadow: 0 0 9px #b7a4df; animation: starlight 6s ease-in-out infinite alternate; animation-play-state: paused; }
 .scene-stars i:nth-child(1) { left: 61%; top: 23%; }
@@ -99,12 +87,10 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c4
 @keyframes star-river-drift { from { transform: translate3d(-1%, 1%, 0) scale(1); opacity: .45; } to { transform: translate3d(1%, -1%, 0) scale(1.04); opacity: .9; } }
 
 /* Each project is a coordinate. The archive keeps its original interaction API. */
-.projects { background: var(--paper); padding: 112px var(--gutter) calc(var(--dock-height) + 48px); }
-.section-heading { display: flex; justify-content: space-between; align-items: end; gap: 36px; }
-.section-heading h2 { font-size: clamp(28px, 3.1vw, 44px); font-weight: 400; letter-spacing: -.035em; line-height: 1.5; margin-top: 16px; }
+.projects { background: var(--paper); padding: 112px clamp(40px, 4.2vw, 88px) calc(var(--dock-height) + 48px); }
+.projects-inner { max-width: 1600px; }
 .section-subtitle { font-size: 13px; color: var(--muted); line-height: 2; max-width: 270px; }
-.mobile-break { display: none; }
-.project-atlas { min-width: 0; margin-top: 32px; scroll-margin-top: 12px; }
+.project-atlas { min-width: 0; margin-top: 20px; scroll-margin-top: 12px; }
 .tags { list-style: none; padding: 0; margin: 15px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .tags li { padding: 4px 8px; color: #c1bed6; border: 1px solid var(--line); font: 10px/1.5 var(--latin); border-radius: 2px; background: #b7a4df06; }
 .work-footnote { font-size: 10px; line-height: 1.8; color: var(--muted); margin-top: 18px; }
@@ -174,8 +160,6 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c4
   .top-nav { gap: 24px; }
 }
 @media (max-width: 1100px) {
-  .hero-title { font-size: clamp(70px, 8.5vw, 98px); }
-  .hero-colophon > p { display: none; }
   .skills-layout, .contact-layout { gap: 7%; }
   .chapter-rail { right: 10px; }
   .dock-caption { font-size: 6px; }
@@ -197,9 +181,6 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c4
   .about { align-items: start; min-height: 100svh; padding-top: 154px; padding-bottom: calc(var(--dock-height) + 112px); }
   .about-layout { grid-template-columns: minmax(0, 1fr); gap: 44px; }
   .hero-copy { width: 100%; max-width: 520px; }
-  .hero-title { font-size: clamp(64px, 12vw, 94px); }
-  .hero-title > span + span { margin-top: 8px; }
-  .about .eyebrow { margin-bottom: 22px; font-size: 9px; }
   .hero-tagline { font-size: 19px; margin-top: 23px; }
   .hero-introduction { max-width: 340px; font-size: 13px; }
   .hero-actions { margin-top: 23px; gap: 27px; }
@@ -207,14 +188,8 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c4
   .hero-scene { inset: 0; width: 100%; height: 100%; }
   .hero-landscape { object-position: 67% center; }
   .hero-shade { background: linear-gradient(0deg, #070d1c 0%, #070d1c14 24%, #070d1c45 51%, #070d1cc2 77%, #070d1c9c); }
-  .hero-colophon { bottom: calc(var(--dock-height) + 24px); padding-top: 16px; }
-  .scene-label { font-size: 6px; gap: 8px; }
-  .scene-label i { width: 12px; }
-  .scroll-cue { font-size: 7px; gap: 10px; }
-  .scroll-cue > span:last-child { margin-left: 0; }
-  .section-heading { display: block; }
-  .section-heading h2 { font-size: 32px; }
-  .projects { padding-top: 72px; padding-bottom: 90px; }
+  .projects { padding: 64px 20px 90px; }
+  .project-atlas { margin-top: 18px; }
   .skills { padding-top: 70px; padding-bottom: 90px; }
   .skills-layout { grid-template-columns: 1fr; gap: 38px; }
   .skills-heading { position: relative; }
@@ -236,25 +211,19 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c4
   .top-nav { gap: 12px; }
   .top-nav a { font-size: 10px; }
   .about { padding-top: 147px; }
-  .hero-title { font-size: 60px; }
   .hero-tagline { font-size: 17px; letter-spacing: .06em; }
   .hero-actions { gap: 20px; }
-  .hero-colophon .scene-label { display: none; }
-  .mobile-break { display: block; }
   .skills-heading h2, .contact-copy h2 { font-size: 26px; }
 }
 /* Intrinsic height is intentional: adding longer project copy must
    extend the chapter. A new gesture advances only after its readable boundary. */
 .is-paged .chapter { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding-top: calc(var(--header-height) + 28px); padding-bottom: calc(var(--dock-height) + 30px); }
 .is-paged .about { padding-top: calc(var(--header-height) + 32px); padding-bottom: calc(var(--dock-height) + 96px); }
-.is-paged .hero-title { font-size: clamp(64px, min(8vw, 11.8svh), 118px); }
-.is-paged .about .eyebrow { margin-bottom: 22px; }
 .is-paged .hero-tagline { margin-top: 23px; }
 .is-paged .hero-introduction { margin-top: 12px; }
 .is-paged .hero-actions { margin-top: 24px; }
-.is-paged .projects { padding-top: calc(var(--header-height) + 20px); padding-bottom: calc(var(--dock-height) + 24px); }
-.is-paged .work-heading h2 { font-size: clamp(26px, 2.6vw, 36px); line-height: 1.35; margin-top: 8px; }
-.is-paged .project-atlas { margin-top: 20px; }
+.is-paged .projects { justify-content: flex-start; padding-top: calc(var(--header-height) + 20px); padding-bottom: calc(var(--dock-height) + 24px); }
+.is-paged .project-atlas { margin-top: 18px; }
 .is-paged .work-footnote { margin-top: 12px; }
 .is-paged .skill-card { padding-block: 20px; }
 .is-paged .contact { padding-bottom: var(--dock-height); gap: 24px; }
@@ -265,7 +234,6 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c4
 .is-paged .site-footer { width: 100%; margin-top: 0; padding-block: 22px; }
 @media (max-height: 800px) {
   .is-paged .projects { padding-top: calc(var(--header-height) + 12px); padding-bottom: calc(var(--dock-height) + 16px); }
-  .is-paged .work-heading h2 { font-size: 28px; margin-top: 6px; }
   .is-paged .project-atlas { margin-top: 12px; }
   .is-paged .work-footnote { margin-top: 8px; }
   .is-paged .skills { padding-top: calc(var(--header-height) + 20px); }

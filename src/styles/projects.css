@@ -13,31 +13,33 @@
 .project-stage { position: relative; }
 .project-panel { min-width: 0; scroll-margin-top: 120px; scroll-margin-bottom: calc(var(--dock-height, 56px) + 24px); }
 .project-panel + .project-panel { margin-top: 70px; }
-.project-panel-motion { display: grid; grid-template-columns: .74fr 1.26fr; gap: 6%; align-items: center; min-height: 350px; }
+.project-panel-motion { display: grid; grid-template-columns: .72fr 1.28fr; gap: 4.5%; align-items: start; min-height: 350px; }
 .project-gallery.is-enhanced .project-stage { display: grid; }
-.project-gallery.is-enhanced .project-panel { grid-area: 1 / 1; margin: 0; opacity: 0; visibility: hidden; pointer-events: none; }
+.project-gallery.is-enhanced .project-panel { display: grid; grid-area: 1 / 1; margin: 0; opacity: 0; visibility: hidden; pointer-events: none; }
 .project-gallery.is-enhanced .project-panel.is-current { opacity: 1; visibility: visible; pointer-events: auto; }
-.project-story { min-width: 0; padding: 12px 0; }
+.project-story { display: flex; flex-direction: column; align-self: stretch; min-width: 0; padding: 12px 0; }
 .project-kicker { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
 .project-edition { font: 11px var(--latin, sans-serif); letter-spacing: .15em; color: var(--archive-accent); }
 .project-state { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; color: #b6bfd5; }
 .project-state::before { content: ''; width: 5px; height: 5px; background: var(--archive-accent); border-radius: 50%; box-shadow: 0 0 8px #d9c09340; }
 .project-state.is-reserved::before { background: transparent; border: 1px solid #a59cbb; width: 6px; height: 6px; box-shadow: none; }
 .project-category { margin: 0; color: var(--archive-muted); letter-spacing: .07em; font-size: 10px; line-height: 1.6; }
-.project-name { font: 500 clamp(35px, 3.8vw, 58px)/1.16 var(--latin, sans-serif); color: #f0edf6; letter-spacing: -.045em; overflow-wrap: anywhere; margin: 20px 0 0; }
-.project-poem { margin-top: 15px; font-size: 16px; color: #dbd7e7; line-height: 1.85; letter-spacing: .025em; }
-.project-story .project-description { max-width: 410px; font-size: 13px; line-height: 1.95; color: var(--archive-muted); margin-top: 15px; overflow-wrap: anywhere; }
+.project-name { font: 500 clamp(38px, 4.5vw, 68px)/1.16 var(--latin, sans-serif); color: #f0edf6; letter-spacing: -.045em; overflow-wrap: anywhere; margin: 20px 0 0; }
+.project-poem { margin-top: 15px; font-size: 18px; color: #dbd7e7; line-height: 1.85; letter-spacing: .025em; }
+.project-story .project-description { max-width: 480px; font-size: 14px; line-height: 1.95; color: var(--archive-muted); margin-top: 15px; overflow-wrap: anywhere; }
 .project-role { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 12px; color: var(--archive-muted); font-size: 12px; line-height: 1.8; }
 .project-role > span { color: #d5dbee; }
 .project-story .tags { list-style: none; display: flex; flex-wrap: wrap; gap: 7px; padding: 0; margin: 18px 0 0; }
 .project-story .tags li { font: 10px/1.5 var(--latin, sans-serif); color: #bbc4dc; padding: 5px 9px; border: 1px solid #b7a4df30; background: #b7a4df07; border-radius: 1px; }
-.project-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 24px; margin-top: 20px; min-height: 42px; }
+/* Share the artwork's full row height, keeping every project's action at the
+   lower left. Auto space collapses for long copy so links never cover text. */
+.project-actions { display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; flex-shrink: 0; gap: 8px 24px; margin-top: auto; padding-top: 20px; min-height: 42px; }
 .project-actions .text-link { color: var(--archive-accent); border-color: #d9c09355; font-size: 12px; gap: 25px; }
 .project-actions .text-link:hover { color: #f0dfbd; border-color: #d9c093; }
 .project-waiting { display: inline-flex; align-items: center; gap: 10px; font-size: 12px; color: var(--archive-muted); }
 .project-waiting > i { width: 17px; height: 1px; background: #b7a4df99; }
 
-.project-visual { position: relative; min-width: 0; width: 100%; max-width: 780px; justify-self: end; padding: 12px 0; }
+.project-visual { position: relative; min-width: 0; width: 100%; max-width: 980px; justify-self: end; padding: 12px 0; }
 .project-frame { position: relative; overflow: hidden; border: 1px solid #b7a4df45; border-radius: 2px; background: #0c1428; box-shadow: 0 20px 55px -28px #000a; }
 .project-frame::after { content: ''; position: absolute; inset: 6px; pointer-events: none; border: 1px solid #b7a4df0d; }
 .frame-bar { min-height: 29px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 12px; color: #b0a4c8; font: 8px var(--latin, sans-serif); letter-spacing: .12em; border-bottom: 1px solid #b7a4df26; background: #10172b; }
@@ -109,19 +111,17 @@
 
 @media (max-width: 1100px) {
   .project-panel-motion { gap: 5%; grid-template-columns: .9fr 1.1fr; }
-  .project-name { font-size: 39px; }.project-poem { font-size: 15px; }
+  .project-name { font-size: 44px; }.project-poem { font-size: 17px; }
   .project-canvas { aspect-ratio: 1.5; }
 }
 @media (max-width: 760px) {
-  .project-gallery > .project-library { order: 1; margin-top: 0; margin-bottom: 28px; }
-  .project-gallery > .project-stage { order: 2; }
-  .project-panel-motion { grid-template-columns: 1fr; gap: 23px; min-height: 0; }
+  .project-panel-motion { grid-template-columns: 1fr; grid-template-rows: auto 1fr; gap: 23px; min-height: 0; }
   .project-story { padding: 0; }.project-visual { grid-row: 1; padding: 0; }
   .project-canvas { aspect-ratio: 1.8; }.visual-caption { margin-top: 13px; }
-  .project-name { font-size: 38px; margin-top: 17px; }
-  .project-poem { font-size: 16px; margin-top: 12px; }
-  .project-story .project-description { max-width: none; font-size: 13px; margin-top: 13px; }
-  .project-story .tags { margin-top: 14px; }.project-actions { margin-top: 18px; }
+  .project-name { font-size: 42px; margin-top: 17px; }
+  .project-poem { font-size: 17px; margin-top: 12px; }
+  .project-story .project-description { max-width: none; font-size: 14px; margin-top: 13px; }
+  .project-story .tags { margin-top: 14px; }.project-actions { padding-top: 18px; }
   .project-tab { flex-basis: 145px; }.tab-art { height: 62px; }
   .blank-constellation { width: 95%; height: 100%; right: -4%; top: -10%; }
   .blank-index { font-size: 105px; }
@@ -136,20 +136,20 @@
   .blank-title { font-size: 8px; }.blank-subtitle { font-size: 10px; margin-top: 6px; }
   .blank-index { font-size: 80px; }.canvas-coordinate { font-size: 6px; }
   .coordinate-top { left: 10px; top: 10px; }.coordinate-bottom { right: 10px; bottom: 9px; }
-  .visual-caption { font-size: 7px; letter-spacing: .06em; }.visual-caption > span:last-child { gap: 6px; }.project-name { font-size: 35px; }
+  .visual-caption { font-size: 7px; letter-spacing: .06em; }.visual-caption > span:last-child { gap: 6px; }.project-name { font-size: 38px; }
 }
 /* Fit the default work and its complete rail in one desktop chapter. Only the
    image has a viewport-based height; text stays intrinsic and may grow freely. */
 .is-paged .project-panel-motion { min-height: 0; }
 .is-paged .project-story { padding: 0; }
 .is-paged .project-kicker { gap: 8px 13px; }
-.is-paged .project-name { font-size: clamp(38px, min(4vw, 6svh), 56px); margin-top: 17px; }
+.is-paged .project-name { font-size: clamp(40px, min(4.6vw, 7.2svh), 64px); margin-top: 17px; }
 .is-paged .project-poem { margin-top: 11px; }
 .is-paged .project-story .project-description { max-width: none; margin-top: 12px; line-height: 1.85; }
 .is-paged .project-story .tags { margin-top: 14px; }
-.is-paged .project-actions { margin-top: 15px; min-height: 38px; }
+.is-paged .project-actions { padding-top: 15px; min-height: 38px; }
 .is-paged .project-visual { max-width: none; padding: 0; }
-.is-paged .project-canvas { height: clamp(220px, calc(100svh - 490px), 360px); aspect-ratio: auto; }
+.is-paged .project-canvas { height: clamp(280px, calc(100svh - 470px), 520px); aspect-ratio: auto; }
 .is-paged .visual-caption { margin-top: 11px; line-height: 1.4; }
 .is-paged .project-library { margin-top: 18px; }
 .is-paged .library-caption { margin-bottom: 9px; }
@@ -160,16 +160,17 @@
   .is-paged .project-kicker { gap: 7px 10px; }
   .is-paged .project-edition { font-size: 9px; letter-spacing: .12em; }
   .is-paged .project-state, .is-paged .project-category { font-size: 9px; }
-  .is-paged .project-name { font-size: clamp(33px, 3.8vw, 44px); line-height: 1.12; margin-top: 12px; }
-  .is-paged .project-poem { font-size: 13px; line-height: 1.65; margin-top: 8px; }
-  .is-paged .project-story .project-description { font-size: 12px; line-height: 1.75; margin-top: 10px; }
+  .is-paged .project-name { font-size: clamp(37px, 4.2vw, 49px); line-height: 1.12; margin-top: 12px; }
+  .is-paged .project-poem { font-size: 15px; line-height: 1.65; margin-top: 8px; }
+  .is-paged .project-story .project-description { font-size: 13px; line-height: 1.75; margin-top: 10px; }
   .is-paged .project-role { font-size: 11px; margin-top: 10px; }
   .is-paged .project-story .tags { margin-top: 10px; }
   .is-paged .project-story .tags li { font-size: 9px; padding: 3px 8px; }
-  .is-paged .project-actions { margin-top: 10px; min-height: 32px; }
+  .is-paged .project-actions { padding-top: 10px; min-height: 32px; }
   .is-paged .project-actions .text-link { padding-block: 6px; font-size: 11px; }
   .is-paged .project-waiting { font-size: 11px; }
   .is-paged .frame-bar { min-height: 24px; font-size: 7px; }
+  .is-paged .project-canvas { height: clamp(270px, calc(100svh - 425px), 375px); }
   .is-paged .visual-caption { margin-top: 9px; font-size: 7px; }
   .is-paged .project-library { margin-top: 14px; }
   .is-paged .library-caption { font-size: 10px; margin-bottom: 7px; }

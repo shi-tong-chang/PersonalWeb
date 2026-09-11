@@ -1,0 +1,13 @@
+---
+import { profile } from '../data/profile';
+import '../styles/hero-name.css';
+
+const chineseName = profile.chineseName.trim();
+const englishName = profile.displayName.join(' ');
+---
+
+<h1 id="about-heading" class="hero-title" data-reveal style={{ '--name-count': Math.max(3, [...chineseName].length) }}>
+  {chineseName && <span class="hero-name-zh" lang="zh-Hant">{chineseName}</span>}
+  <span class="hero-name-en" lang="en">{englishName}</span>
+  <span class="hero-name-signature" aria-hidden="true"><i></i><svg viewBox="0 0 28 28" focusable="false"><path d="M14 2 16.8 11.2 26 14 16.8 16.8 14 26 11.2 16.8 2 14 11.2 11.2Z"/><circle cx="14" cy="14" r="2"/></svg><i></i></span>
+</h1>

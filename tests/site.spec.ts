@@ -28,7 +28,7 @@ test('the owner is the hero and the Milky Way artwork loads without runtime erro
   await page.goto('./');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://shi-tong-chang.github.io/PersonalWeb/');
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/PersonalWeb/favicon.svg');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/SHI-TONG\s*CHANG/);
+  await expect(page.getByRole('heading', { level: 1 }).locator('.hero-name-en')).toHaveText('SHI-TONG CHANG');
   const landscape = page.locator('.hero-scene img.hero-landscape');
   await expect(landscape).toHaveAttribute('src', '/PersonalWeb/assets/milky-way-v1.webp');
   await expect.poll(() => landscape.evaluate(element => {
@@ -410,7 +410,7 @@ test('entering projects directly reveals ten equal-priority slots with honest re
   await expect(page.locator('div#project-archive.project-atlas')).toBeVisible();
   await expect(page.locator('.featured-card, [data-project-open], #projects details, #projects summary')).toHaveCount(0);
   await expect(gallery).toBeInViewport();
-  await expect(gallery).toHaveAccessibleName(/作品/);
+  await expect(gallery).toHaveAccessibleName(/專案經歷/);
   await expect(tabs).toHaveCount(10);
   await expect(tabs.first()).toContainText('PersonalWeb');
   await expect(tabs.first()).not.toContainText('預留');
@@ -504,7 +504,9 @@ test('long project content reads within its chapter and only a fresh boundary ge
   await page.waitForTimeout(250);
   await page.mouse.wheel(0, 800);
   await page.mouse.wheel(0, 800);
-  await expect.poll(() => page.evaluate(() => scrollY)).toBeCloseTo(chapterEnd, 0);
+  // Intrinsic text height can put the boundary on a half pixel; Chromium may
+  // quantize scrollY to a whole pixel. Still require settling within one pixel.
+  await expect.poll(async () => Math.abs(await page.evaluate(() => scrollY) - chapterEnd)).toBeLessThanOrEqual(1);
   await page.waitForTimeout(850);
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
   expect(Math.abs(await page.evaluate(() => scrollY) - chapterEnd)).toBeLessThanOrEqual(2);
@@ -728,7 +730,7 @@ test('without JavaScript or web fonts native navigation and the full project gal
   try {
     await page.goto(siteURL);
     await expect(page.locator('.chapter')).toHaveCount(5);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/SHI-TONG\s*CHANG/);
+    await expect(page.getByRole('heading', { level: 1 }).locator('.hero-name-en')).toHaveText('SHI-TONG CHANG');
     await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /專案經歷/ }).click();
     // Wait for native smooth fragment scrolling before a no-JS actionability check.
     await expect.poll(() => page.locator('#projects').evaluate(element => Math.abs(

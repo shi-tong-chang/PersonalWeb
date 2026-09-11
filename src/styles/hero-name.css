@@ -1,0 +1,70 @@
+/* A typographic signature, not a raster logo. Both names remain selectable
+   text, and local serif fallbacks keep the identity visible without web fonts. */
+.hero-copy { container-type: inline-size; }
+.hero-title { width: 100%; max-width: 100%; font-weight: 500; line-height: 1.2; }
+.hero-name-zh {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  font-family: 'Noto Serif TC', 'Songti TC', 'PMingLiU', serif;
+  font-size: clamp(62px, 8.5vw, 112px);
+  font-weight: 500;
+  line-height: 1.36;
+  letter-spacing: .13em;
+  color: #f1eaf0;
+  text-shadow: 0 2px 24px #b8a4df1f;
+}
+.hero-name-en {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 14px;
+  font: 500 clamp(27px, 3vw, 43px)/1.25 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  letter-spacing: .17em;
+  color: #ddc7a5;
+  white-space: nowrap;
+}
+.hero-name-signature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: clamp(130px, 18vw, 230px);
+  margin-top: 24px;
+  color: #c7b8dd;
+  pointer-events: none;
+}
+.hero-name-signature i { flex: 1; height: 1px; background: linear-gradient(90deg, #d9c09380, #b7a4df19); }
+.hero-name-signature i:last-child { flex: .42; transform: scaleX(-1); }
+.hero-name-signature svg { width: 19px; height: 19px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: .8; }
+.hero-name-signature svg circle { fill: #d9c093; stroke: none; }
+
+/* Text can also be edited to a longer name without overflowing its column. */
+@supports (font-size: 1cqi) {
+  .hero-name-zh { font-size: min(clamp(62px, 8.5vw, 112px), calc(98cqi / (var(--name-count, 3) * 1.13))); }
+  .hero-name-en { font-size: min(clamp(27px, 3vw, 43px), 6.4cqi); }
+}
+@supports (background-clip: text) {
+  .hero-name-zh {
+    background: linear-gradient(145deg, #fbf3e2 4%, #eeeaf8 43%, #bdb4dd 83%, #ded4e7);
+    background-clip: text;
+    color: transparent;
+  }
+}
+.is-paged .hero-name-zh { font-size: clamp(58px, min(8.5vw, 12svh), 112px); }
+.is-paged .hero-name-en { margin-top: 10px; }
+.is-paged .hero-name-signature { margin-top: 20px; }
+@supports (font-size: 1cqi) {
+  .is-paged .hero-name-zh { font-size: min(clamp(58px, min(8.5vw, 12svh), 112px), calc(98cqi / (var(--name-count, 3) * 1.13))); }
+}
+@media (max-width: 760px) {
+  .hero-name-zh { font-size: clamp(56px, 17.5vw, 88px); letter-spacing: .11em; }
+  .hero-name-en { margin-top: 13px; font-size: clamp(24px, 6vw, 32px); letter-spacing: .14em; }
+  .hero-name-signature { width: 160px; margin-top: 22px; }
+  @supports (font-size: 1cqi) {
+    .hero-name-zh { font-size: min(clamp(56px, 17.5vw, 88px), calc(98cqi / (var(--name-count, 3) * 1.11))); }
+    .hero-name-en { font-size: min(clamp(24px, 6vw, 32px), 7.4cqi); }
+  }
+}
+@media (forced-colors: active) {
+  .hero-name-zh { background: none; color: CanvasText; text-shadow: none; }
+}

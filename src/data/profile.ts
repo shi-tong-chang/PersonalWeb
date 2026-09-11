@@ -2,6 +2,8 @@
 export const profile = {
   name: 'shi-tong-chang',
   displayName: ['SHI-TONG', 'CHANG'],
+  // Use the owner's confirmed Chinese characters, never infer from romanization.
+  chineseName: '張詩彤',
   monogram: 'STC',
   title: '讓想像有形，讓作品有溫度。',
   introduction: '你好，我是 Shi-Tong。喜歡探索不同領域，也喜歡把腦海裡的風景，一步步做成能被看見、被使用的作品。',
@@ -23,16 +25,14 @@ export const chapters = [
 ] as const;
 
 export const copy = {
-  siteName: 'A Personal Universe',
+  siteName: '個人網站',
   about: {
-    eyebrow: 'A PERSONAL UNIVERSE',
     action: '探索我的作品',
     secondaryAction: '與我聯繫',
     signature: '在想像與實作之間，探索自己的可能。',
   },
   projects: {
     eyebrow: '02 / PROJECT ATLAS',
-    heading: ['讓想像', '成為作品。'],
     action: '查看 GitHub 專案',
     footer: '作品持續累積中，其餘位置留給下一次探索。',
   },

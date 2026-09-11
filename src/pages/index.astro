@@ -3,6 +3,7 @@ import { profile, skills, copy, chapters } from '../data/profile';
 import ProjectGallery from '../components/ProjectGallery.astro';
 import ChapterScene from '../components/ChapterScene.astro';
 import Portrait from '../components/Portrait.astro';
+import HeroName from '../components/HeroName.astro';
 import Timeline from '../components/Timeline.astro';
 import '../styles/global.css';
 import '../styles/motion.css';
@@ -23,6 +24,7 @@ const landscape = `${base}/assets/milky-way-v1.webp`;
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&family=Noto+Sans+TC:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Noto+Serif+TC:wght@500&display=swap" rel="stylesheet" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={`${profile.displayName.join(' ')}｜${copy.siteName}`} />
     <meta property="og:description" content={profile.title} />
@@ -47,8 +49,7 @@ const landscape = `${base}/assets/milky-way-v1.webp`;
         <div class="hero-shade" aria-hidden="true"></div>
         <div class="section-inner about-layout">
           <div class="hero-copy">
-            <p class="eyebrow" data-reveal><span class="little-star" aria-hidden="true">✦</span>{copy.about.eyebrow}</p>
-            <h1 id="about-heading" class="hero-title" data-reveal><span>{profile.displayName[0]}</span>{' '}<span>{profile.displayName[1]}<i aria-hidden="true">.</i></span></h1>
+            <HeroName />
             <p class="hero-tagline" data-reveal>{profile.title}</p>
             <p class="hero-introduction" data-reveal>{profile.introduction}</p>
             {profile.biography && <p class="biography" data-reveal>{profile.biography}</p>}
@@ -56,13 +57,12 @@ const landscape = `${base}/assets/milky-way-v1.webp`;
           </div>
           <Portrait />
         </div>
-        <div class="hero-colophon"><a class="scroll-cue" href="#projects"><span class="scroll-cue-line" aria-hidden="true"></span>SCROLL TO EXPLORE<span aria-hidden="true">↓</span></a><p>每一次探索，<span>都在點亮自己的星圖。</span></p><span class="scene-label">EST. 2026 <i></i> ALWAYS EXPLORING</span></div>
       </section>
 
       <section class="chapter projects" id="projects" aria-labelledby="projects-heading" tabindex="-1">
         <ChapterScene scene="projects" />
         <div class="section-inner projects-inner">
-          <div class="section-heading work-heading" data-reveal="left"><div><p class="eyebrow">{copy.projects.eyebrow}</p><h2 id="projects-heading">{copy.projects.heading[0]}，<br class="mobile-break" />{copy.projects.heading[1]}</h2></div></div>
+          <div class="work-heading" data-reveal="left"><h2 id="projects-heading" class="eyebrow"><span class="sr-only">專案經歷 — </span>{copy.projects.eyebrow}</h2></div>
           <div class="project-atlas" id="project-archive">
             <ProjectGallery />
           </div>
@@ -92,7 +92,7 @@ const landscape = `${base}/assets/milky-way-v1.webp`;
     <nav class="chapter-rail" aria-label="快速章節索引">{chapters.map((chapter, index) => <a href={`#${chapter.id}`} data-chapter={index} aria-label={`${chapter.number} ${chapter.label}`} aria-current={index === 0 ? 'location' : undefined}><span class="rail-label">{chapter.label}</span><span class="rail-point" aria-hidden="true"></span></a>)}</nav>
     <div class="chapter-dock">
       <div class="chapter-position" aria-label="章節進度"><span id="current-chapter">01</span><span class="chapter-divider">/</span><span>{String(chapters.length).padStart(2, '0')}</span><span class="chapter-progress" aria-hidden="true"><span id="progress-fill"></span></span></div>
-      <span class="dock-caption" aria-hidden="true">A PERSONAL UNIVERSE <span>✦</span> AN ONGOING EXPLORATION</span>
+      <span class="dock-caption" aria-hidden="true">AN ONGOING EXPLORATION</span>
       <a id="next-chapter" href="#projects"><span id="next-label">下一章</span><span id="next-arrow" aria-hidden="true">↓</span></a>
     </div>
     <script src="../scripts/chapters.ts"></script>

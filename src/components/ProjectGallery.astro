@@ -42,7 +42,7 @@ const number = (index: number) => String(index + 1).padStart(2, '0');
           </div>
           <div class:list={['project-visual', { 'is-reserved': project.status === 'reserved' }]} data-reveal="right" data-reveal-delay="80">
             <div class="project-frame">
-              <div class="frame-bar" aria-hidden="true"><span class="frame-reticle">＋<i></i></span><span>{project.status === 'reserved' ? 'UNMAPPED POSSIBILITY' : 'A PERSONAL UNIVERSE'}</span><span>FIELD / {number(index)}</span></div>
+              <div class="frame-bar" aria-hidden="true"><span class="frame-reticle">＋<i></i></span>{project.status === 'reserved' && <span>UNMAPPED POSSIBILITY</span>}<span>FIELD / {number(index)}</span></div>
               <div class="project-canvas">
                 {project.cover ? <img src={asset(project.cover.src)} alt={project.cover.alt} width="1672" height="941" loading="lazy" decoding="async" style={{ 'object-fit': project.cover.fit ?? 'cover', 'object-position': project.cover.position ?? 'center' }} /> : <div class="project-blank" aria-hidden="true">
                   <span class="blank-grid"></span>

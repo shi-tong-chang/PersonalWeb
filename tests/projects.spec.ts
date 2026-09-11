@@ -40,6 +40,168 @@ async function expectFocusedTabBetweenHeaderAndDock(tab: Locator) {
   }), { message: 'The selected control must not be obscured by the header or fixed chapter dock.' }).toBe(true);
 }
 
+test('the expanded project stage removes its old slogan while preserving its chapter name and ten slots', async ({ page }) => {
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1366, height: 768 },
+    { width: 900, height: 700 },
+    { width: 390, height: 844 },
+  ]) {
+    await test.step(`${viewport.width} × ${viewport.height}`, async () => {
+      await page.setViewportSize(viewport);
+      await openProjects(page);
+      const section = page.locator('#projects');
+      const gallery = section.locator('[data-project-gallery]');
+      const heading = section.locator('h2#projects-heading');
+      const panel = gallery.getByRole('tabpanel');
+      const story = panel.locator('.project-story');
+      const visual = panel.locator('.project-visual');
+      const image = visual.locator('.project-canvas > img');
+      await expect(section).not.toContainText(/讓想像\s*[，,]?\s*成為作品[。.]?/);
+      await expect(heading).toHaveAccessibleName(/專案經歷/);
+      await expect(heading).toContainText('02 / PROJECT ATLAS');
+      await expect(section).toHaveAccessibleName(/專案經歷/);
+      await expect(gallery).toHaveAccessibleName(/專案經歷/);
+      await expect(gallery.getByRole('tab')).toHaveCount(10);
+      await expect(gallery.locator('[data-project-panel]')).toHaveCount(10);
+      await expect(panel).toHaveCount(1);
+      await image.evaluate(element => (element as HTMLImageElement).decode());
+      for (const surface of [heading, story, visual]) {
+        await expect(surface).toBeVisible();
+        await expect.poll(() => surface.evaluate(element => {
+          for (let node: Element | null = element; node && !node.matches('.chapter'); node = node.parentElement) {
+            if (Number(getComputedStyle(node).opacity) < .99) return false;
+          }
+          return true;
+        })).toBe(true);
+      }
+      if (viewport.width >= 900) {
+        await expect(page.locator('body')).toHaveClass(/is-paged/);
+        for (const surface of [heading, story, visual, gallery.locator('[data-project-track]')]) {
+          await expectFocusedTabBetweenHeaderAndDock(surface);
+        }
+        await expect.poll(() => panel.evaluate(element => {
+          const story = element.querySelector('.project-story')!.getBoundingClientRect();
+          const visual = element.querySelector('.project-visual')!.getBoundingClientRect();
+          return story.right < visual.left && Math.min(story.bottom, visual.bottom) > Math.max(story.top, visual.top);
+        }), { message: 'Project text must remain to the left of the artwork on desktop.' }).toBe(true);
+      }
+      if (viewport.width === 1440) {
+        const [artBounds, storyBounds, headerBounds] = await Promise.all([
+          image.boundingBox(), story.boundingBox(), page.locator('.site-header').boundingBox(),
+        ]);
+        // Guard the requested larger, higher composition without fixing exact
+        // font metrics: the previous artwork was 742 × 360 and copy began at y262.
+        expect(artBounds!.width).toBeGreaterThanOrEqual(780);
+        expect(artBounds!.height).toBeGreaterThanOrEqual(400);
+        expect(storyBounds!.y).toBeLessThanOrEqual(headerBounds!.y + headerBounds!.height + 80);
+        expect(await panel.locator('.project-name').evaluate(element => parseFloat(getComputedStyle(element).fontSize)))
+          .toBeGreaterThanOrEqual(60);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      if (viewport.width === 1440 || viewport.width === 390) {
+        const screenshotPath = test.info().outputPath(`expanded-projects-${viewport.width}.png`);
+        await section.screenshot({ path: screenshotPath, animations: 'disabled' });
+        await test.info().attach(`Expanded project stage at ${viewport.width}px`, {
+          path: screenshotPath,
+          contentType: 'image/png',
+        });
+      }
+    });
+  }
+});
+
+test('project actions stay at the lower left above the library through selection and growing content', async ({ page }) => {
+  const gallery = page.locator('[data-project-gallery]');
+  const panel = gallery.getByRole('tabpanel');
+  const metrics = () => gallery.evaluate(element => {
+    const panel = element.querySelector('[data-project-panel][aria-hidden="false"]')!;
+    const stage = element.querySelector('.project-stage')!.getBoundingClientRect();
+    const story = panel.querySelector('.project-story')!.getBoundingClientRect();
+    const actions = panel.querySelector('.project-actions')!.getBoundingClientRect();
+    const visual = panel.querySelector('.project-visual')!.getBoundingClientRect();
+    const caption = element.querySelector('.library-caption')!.getBoundingClientRect();
+    const contentBottom = Math.max(...Array.from(panel.querySelectorAll('.project-description, .project-role, .tags'))
+      .map(content => content.getBoundingClientRect().bottom));
+    return {
+      leftDelta: actions.left - caption.left,
+      captionGap: caption.top - actions.bottom,
+      contentGap: actions.top - contentBottom,
+      storyLeftDelta: actions.left - story.left,
+      stageBottomGap: stage.bottom - actions.bottom,
+      visualBottomDelta: actions.bottom - visual.bottom,
+      actionBottomFromStage: actions.bottom - stage.top,
+      captionTopFromStage: caption.top - stage.top,
+      stageHeight: stage.height,
+    };
+  });
+  async function expectLowerLeftAction(desktop: boolean, extended = false) {
+    await expect(panel.locator('.project-actions')).toBeVisible();
+    await expect.poll(async () => {
+      const layout = await metrics();
+      return Math.abs(layout.leftDelta) <= 1 && Math.abs(layout.storyLeftDelta) <= 1
+        && layout.captionGap >= 8 && layout.captionGap <= 64 && layout.contentGap >= -1
+        && layout.stageBottomGap >= -1 && layout.stageBottomGap <= 16
+        && (!desktop || extended || Math.abs(layout.visualBottomDelta) <= 16);
+    }, { message: 'The project action must sit at the left edge above the library without covering its copy.' }).toBe(true);
+  }
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1366, height: 768 },
+    { width: 900, height: 700 },
+    { width: 390, height: 844 },
+    { width: 360, height: 640 },
+  ]) {
+    await test.step(`${viewport.width} × ${viewport.height}`, async () => {
+      // The previous step changes the fragment and injects long copy. Ensure
+      // goto is a document load, not same-document navigation retaining it.
+      await page.goto('about:blank');
+      await page.setViewportSize(viewport);
+      await openProjects(page);
+      const desktop = viewport.width >= 900;
+      const githubAction = panel.getByRole('link', { name: /查看 GitHub 專案/ });
+      await expect(githubAction).toHaveAttribute('href', 'https://github.com/shi-tong-chang/PersonalWeb');
+      await expectLowerLeftAction(desktop);
+      const baseline = await metrics();
+      const originalChapterHeight = await page.locator('#projects').evaluate(element => element.getBoundingClientRect().height);
+
+      for (const [tabIndex, id] of [[1, 'project-02'], [0, 'personal-web']] as const) {
+        await gallery.getByRole('tab').nth(tabIndex).click();
+        await expect(panel).toHaveAttribute('id', `project-panel-${id}`);
+        await expect(page).toHaveURL(new RegExp(`#project-panel-${id}$`));
+        await expectLowerLeftAction(desktop);
+        await expect.poll(async () => {
+          const layout = await metrics();
+          return Math.abs(layout.actionBottomFromStage - baseline.actionBottomFromStage) <= 2
+            && Math.abs(layout.captionTopFromStage - baseline.captionTopFromStage) <= 2;
+        }, { message: 'Switching projects must retain the shared action and library positions.' }).toBe(true);
+        if (id === 'project-02') {
+          await expect(panel.getByRole('link')).toHaveCount(0);
+          await expect(panel.locator('.project-waiting')).toBeVisible();
+        } else {
+          await expect(githubAction).toHaveAttribute('href', 'https://github.com/shi-tong-chang/PersonalWeb');
+        }
+      }
+
+      // New copy is test-only. The footer must move with intrinsic content,
+      // never cover it or become fixed to the original short stage height.
+      await panel.locator('.project-description').evaluate(element => {
+        element.append(document.createTextNode('補充專案背景、實作取捨與成果，長篇內容也必須能自然展開閱讀。'.repeat(70)));
+      });
+      await expect.poll(() => page.locator('#projects').evaluate(element => element.getBoundingClientRect().height))
+        .toBeGreaterThan(originalChapterHeight + 200);
+      await expect.poll(async () => (await metrics()).stageHeight).toBeGreaterThan(baseline.stageHeight + 200);
+      await expectLowerLeftAction(desktop, true);
+      expect(await panel.locator('.project-description').evaluate(element => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
+      await githubAction.scrollIntoViewIfNeeded();
+      await expect(githubAction).toBeInViewport();
+      await expectFocusedTabBetweenHeaderAndDock(githubAction);
+      await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    });
+  }
+});
+
 test('ten project slots expose one accessible panel and clearly mark nine reservations', async ({ page }) => {
   await openProjects(page);
   const gallery = page.locator('[data-project-gallery]');
