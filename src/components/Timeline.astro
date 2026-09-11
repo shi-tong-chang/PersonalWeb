@@ -1,5 +1,5 @@
 ---
-import StarField from './StarField.astro';
+import ChapterScene from './ChapterScene.astro';
 import { timelineCopy, timelineEvents, type TimelineEvent } from '../data/timeline';
 import '../styles/timeline.css';
 
@@ -11,7 +11,7 @@ const { events = timelineEvents } = Astro.props;
 ---
 
 <section class="chapter timeline" id="timeline" aria-labelledby="timeline-heading" tabindex="-1">
-  <StarField chart="timeline" offset={2} />
+  <ChapterScene scene="timeline" />
   <div class="section-inner timeline-layout">
     <div class="timeline-heading" data-reveal>
       <p class="eyebrow">{timelineCopy.eyebrow}</p>

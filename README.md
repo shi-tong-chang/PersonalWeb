@@ -40,6 +40,8 @@ npm run test:e2e
 - `public/assets/portrait-crystal-v1.webp`、`public/assets/portrait-mask-v1.webp`：使用者原照片的無損 WebP 與獨立輪廓遮罩，人物五官不使用生成版本。
 - `public/assets/orbital-atlas-v1.svg`：保留於 PersonalWeb 作品卡的原創星系視覺；分享預覽另用 PNG，不再作為首頁背景。
 - `src/components/StarField.astro`：建置時繪製靜態星空，不需要客戶端粒子迴圈。
+- `src/components/ChapterScene.astro`、`src/styles/scenes.css`：專案星環、技能星雲、大事記星軌與聯繫夜海，讓每章有不同的完整場景；共用局部文字遮罩與輕量景深進場。
+- [五章換景、美術素材與生成提示詞](docs/chapter-scenes-art-direction.md)：四張原創背景存於 `public/assets/scene-*-v1.webp`，首頁星河與人物照片維持原樣。
 - [水晶球與星河素材／提示詞](docs/crystal-milky-way-art-direction.md)、[星圖美術方向](docs/orbital-atlas-art-direction.md)、[專案編輯指南](docs/projects.md)、[大事記編輯指南](docs/timeline.md)、[歷史夜海美術與生成提示詞](docs/star-sea-art-direction.md)。
 
 `profile.biography` 與 `profile.email` 可留空。設定 Email 後會顯示寄信與複製功能，請只放願意公開的地址。具體技能可填在 `skills` 的標籤與說明。

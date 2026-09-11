@@ -1,0 +1,189 @@
+/* One night, four different places. Only the decorative wrapper clips its
+   contents: chapter controls and foreground entrance animations stay intact. */
+.chapter-scene {
+  --scene-position: 64% 50%;
+  --scene-origin: 74% 40%;
+  --scene-enter-x: 1.2%;
+  --scene-enter-y: 1%;
+  --scene-duration: 1000ms;
+  --scene-atmosphere: radial-gradient(ellipse at 78% 25%, #a899d73d, transparent 56%);
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  overflow: clip;
+  contain: paint;
+  pointer-events: none;
+  user-select: none;
+  background: #0b142b;
+}
+
+.chapter-scene-image,
+.chapter-scene-drift,
+.chapter-scene-veil {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.chapter-scene-image {
+  max-width: none;
+  object-fit: cover;
+  object-position: var(--scene-position);
+  transform-origin: var(--scene-origin);
+  transform: none;
+  opacity: 1;
+}
+
+.chapter-scene-drift {
+  inset: -4%;
+  width: 108%;
+  height: 108%;
+  z-index: 1;
+  background: var(--scene-atmosphere);
+  opacity: .58;
+  transform: none;
+}
+
+.chapter-scene > .chapter-sky {
+  z-index: 1;
+  opacity: .48;
+}
+
+.chapter-scene-veil {
+  z-index: 2;
+  background:
+    linear-gradient(90deg, #070d1ca6, #070d1c33 49%, #070d1c0d 78%),
+    linear-gradient(0deg, #070d1ccc, #070d1c00 29%, #070d1c00 76%, #070d1c52);
+}
+
+/* Projects: a broad planetary ring opens toward the visual on the right. */
+.chapter-scene[data-scene='projects'] {
+  --scene-position: 70% 48%;
+  --scene-origin: 81% 38%;
+  --scene-enter-x: 1.8%;
+  --scene-enter-y: -.8%;
+  background: radial-gradient(ellipse at 80% 30%, #243357, #0b142b 65%);
+}
+
+.chapter-scene[data-scene='projects'] .chapter-scene-veil {
+  background:
+    linear-gradient(90deg, #070d1cc9, #070d1c66 33%, #070d1c0d 64%, #070d1c19),
+    linear-gradient(0deg, #070d1ce0, #070d1c66 19%, #070d1c00 48%, #070d1c0d 79%, #070d1c66);
+}
+
+/* Skills: luminous material gathers on the left; the skill list stays calm. */
+.chapter-scene[data-scene='skills'] {
+  --scene-position: 36% 56%;
+  --scene-origin: 26% 69%;
+  --scene-enter-x: -1.7%;
+  --scene-enter-y: 1.4%;
+  --scene-duration: 1100ms;
+  --scene-atmosphere: radial-gradient(ellipse at 25% 71%, #8a90db47, transparent 57%);
+  background: radial-gradient(ellipse at 23% 70%, #283461, #0b142b 68%);
+}
+
+.chapter-scene[data-scene='skills'] .chapter-scene-veil {
+  background:
+    radial-gradient(ellipse 35% 25% at 20% 36%, #070d1ca6, #070d1c66 50%, #070d1c00),
+    linear-gradient(90deg, #070d1c66, #070d1c33 29%, #070d1c9e 61%, #070d1cc2),
+    linear-gradient(0deg, #070d1c99, #070d1c00 26%, #070d1c00 72%, #070d1c52);
+}
+
+/* Timeline: long arcs of starlight trace time, away from the event column. */
+.chapter-scene[data-scene='timeline'] {
+  --scene-position: 34% 44%;
+  --scene-origin: 26% 27%;
+  --scene-enter-x: -.8%;
+  --scene-enter-y: -1.5%;
+  --scene-duration: 1050ms;
+  --scene-atmosphere: radial-gradient(ellipse at 24% 26%, #b0a0d338, transparent 52%);
+  background: radial-gradient(ellipse at 27% 27%, #29324d, #0b142b 63%);
+}
+
+.chapter-scene[data-scene='timeline'] .chapter-scene-veil {
+  background:
+    linear-gradient(90deg, #070d1c5c, #070d1c33 31%, #070d1cb0 58%, #070d1ccc),
+    linear-gradient(0deg, #070d1cb8, #070d1c00 37%, #070d1c00 73%, #070d1c52);
+}
+
+/* Contact: the sky settles at a moonlit horizon, an open ending. */
+.chapter-scene[data-scene='contact'] {
+  --scene-position: 71% 50%;
+  --scene-origin: 77% 37%;
+  --scene-enter-x: .6%;
+  --scene-enter-y: 1.5%;
+  --scene-duration: 1150ms;
+  --scene-atmosphere: radial-gradient(ellipse at 76% 62%, #94b7d638, transparent 53%);
+  background: linear-gradient(#0b142b, #1b3150 64%, #0b172b);
+}
+
+.chapter-scene[data-scene='contact'] .chapter-scene-veil {
+  background:
+    linear-gradient(90deg, #070d1cbf, #070d1c66 37%, #070d1c0d 69%),
+    linear-gradient(0deg, #070d1cc9, #070d1c19 27%, #070d1c00 67%, #070d1c38);
+}
+
+/* No hidden default or permanent compositing hints. Leaving a chapter (or
+   hiding the document) removes animation and restores this static final view. */
+.chapter[data-motion-active='true'] > .chapter-scene .chapter-scene-image {
+  animation: chapter-scene-enter var(--scene-duration) cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.chapter[data-motion-active='true'] > .chapter-scene .chapter-scene-drift {
+  animation: chapter-scene-drift 22s ease-in-out infinite alternate;
+}
+
+@keyframes chapter-scene-enter {
+  from {
+    transform: translate3d(var(--scene-enter-x), var(--scene-enter-y), 0) scale(1.075);
+    opacity: .78;
+  }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes chapter-scene-drift {
+  from { transform: translate3d(-1%, .5%, 0) scale(1); opacity: .4; }
+  to { transform: translate3d(1%, -.5%, 0) scale(1.035); opacity: .76; }
+}
+
+@media (max-width: 899px) {
+  .chapter-scene[data-scene='projects'] { --scene-position: 73% 42%; }
+  .chapter-scene[data-scene='skills'] { --scene-position: 28% 52%; }
+  .chapter-scene[data-scene='timeline'] { --scene-position: 28% 40%; }
+  .chapter-scene[data-scene='contact'] { --scene-position: 85% 48%; }
+
+  .chapter-scene[data-scene='projects'] .chapter-scene-veil {
+    background:
+      linear-gradient(90deg, #070d1c8c, #070d1c19 77%),
+      linear-gradient(0deg, #070d1ccc, #070d1c80 29%, #070d1c0d 55%, #070d1c47 82%, #070d1c80);
+  }
+
+  .chapter-scene[data-scene='skills'] .chapter-scene-veil {
+    background:
+      radial-gradient(ellipse 78% 19% at 29% 22%, #070d1c99, #070d1c52 45%, #070d1c00),
+      linear-gradient(90deg, #070d1c52, #070d1c19),
+      linear-gradient(0deg, #070d1ccc, #070d1c99 42%, #070d1c38 67%, #070d1c52);
+  }
+
+  .chapter-scene[data-scene='timeline'] .chapter-scene-veil {
+    background:
+      linear-gradient(90deg, #070d1c33, #070d1c52),
+      linear-gradient(0deg, #070d1ccc, #070d1ca3 47%, #070d1c33 74%, #070d1c47);
+  }
+
+  .chapter-scene[data-scene='contact'] .chapter-scene-veil {
+    background:
+      linear-gradient(90deg, #070d1c66, #070d1c0d 82%),
+      linear-gradient(0deg, #070d1cc2, #070d1c0d 37%, #070d1c66 73%, #070d1c80);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter[data-motion-active='true'] > .chapter-scene :is(.chapter-scene-image, .chapter-scene-drift) {
+    animation: none;
+    transform: none;
+  }
+}

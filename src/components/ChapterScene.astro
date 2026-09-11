@@ -1,0 +1,29 @@
+---
+import StarField from './StarField.astro';
+import '../styles/scenes.css';
+
+interface Props {
+  scene: 'projects' | 'skills' | 'timeline' | 'contact';
+}
+
+const { scene } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const offsets = { projects: 0, skills: 1, timeline: 2, contact: 3 };
+const source = `${base}/assets/scene-${scene}-v1.webp`;
+---
+
+<div class="chapter-scene" data-scene={scene} aria-hidden="true">
+  <img
+    class="chapter-scene-image"
+    src={source}
+    alt=""
+    width="1600"
+    height="900"
+    loading="eager"
+    fetchpriority="low"
+    decoding="async"
+  />
+  <div class="chapter-scene-drift" data-scene-drift></div>
+  <StarField chart={scene} offset={offsets[scene]} />
+  <div class="chapter-scene-veil"></div>
+</div>
