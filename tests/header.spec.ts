@@ -45,8 +45,18 @@ async function expectCenteredNavigation(header: Locator) {
       Math.min(first.right, second.right) - Math.max(first.left, second.left) > 1
       && Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top) > 1
     );
+    const visibleFontSize = (selector: string) => {
+      const target = element.querySelector(selector)!;
+      const bounds = target.getBoundingClientRect();
+      return bounds.width > 0 && bounds.height > 0 ? parseFloat(getComputedStyle(target).fontSize) : null;
+    };
     return {
+      width: innerWidth,
       centerDelta: Math.abs(navigation.left + navigation.width / 2 - innerWidth / 2),
+      labelSizes: Array.from(element.querySelectorAll('.nav-label')).map(label => parseFloat(getComputedStyle(label).fontSize)),
+      brandSize: visibleFontSize('.brand-wordmark'),
+      githubLabelSize: visibleFontSize('.github-label'),
+      contactSize: visibleFontSize('.header-contact'),
       brandTextCount: brandText.length,
       brandTextInside: brandText.every(rect => rect.left >= header.left - 1 && rect.right <= header.right + 1
         && rect.top >= header.top - 1 && rect.bottom <= header.bottom + 1),
@@ -57,6 +67,12 @@ async function expectCenteredNavigation(header: Locator) {
   expect(layout.brandTextCount).toBeGreaterThan(0);
   expect(layout.brandTextInside, 'The visible identity text must remain inside the fixed header.').toBe(true);
   expect(layout.brandTextOverlap, 'Identity glyphs must not overflow into navigation or action controls.').toBe(false);
+  const minimumLabelSize = layout.width <= 350 ? 11 : layout.width <= 899 ? 12 : layout.width <= 1100 ? 14 : 15;
+  expect(Math.min(...layout.labelSizes), 'The enlarged chapter labels must not shrink back to their previous small sizes.')
+    .toBeGreaterThanOrEqual(minimumLabelSize);
+  expect(layout.brandSize).toBeGreaterThanOrEqual(layout.width <= 350 ? 9 : layout.width <= 1100 ? 10 : 11);
+  if (layout.githubLabelSize !== null) expect(layout.githubLabelSize).toBeGreaterThanOrEqual(10);
+  if (layout.contactSize !== null) expect(layout.contactSize).toBeGreaterThanOrEqual(9);
 }
 
 test('five distinct chapter glyphs preserve named links, keyboard access and synchronized active state', async ({ page }) => {

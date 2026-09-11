@@ -16,8 +16,8 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c7
 .site-header.is-scrolled { background: #070d1cf2; backdrop-filter: blur(16px); }
 .brand { display: flex; align-items: center; justify-self: start; gap: 12px; min-width: 0; }
 .brand-symbol { width: 29px; height: 29px; flex: 0 0 auto; color: var(--accent); }
-.brand-wordmark { font-size: 10px; letter-spacing: .15em; font-weight: 500; white-space: nowrap; }
-.brand-wordmark > span { display: block; font-size: 7px; font-weight: 400; letter-spacing: .23em; margin-top: 6px; color: var(--muted); }
+.brand-wordmark { font-size: 11px; letter-spacing: .15em; font-weight: 500; white-space: nowrap; }
+.brand-wordmark > span { display: block; font-size: 8px; font-weight: 400; letter-spacing: .23em; margin-top: 6px; color: var(--muted); }
 .top-nav {
   display: flex; align-items: center; justify-self: center; gap: 4px;
   min-width: 0; padding: 4px; border: 1px solid #b7a4df30; border-radius: 7px;
@@ -46,8 +46,8 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c7
   transition: transform .4s ease, color .25s, border-color .25s, box-shadow .3s;
 }
 .nav-emblem .chapter-glyph { width: 24px; height: 24px; }
-.nav-label { font: 500 13px/1.4 'Noto Serif TC', 'Songti TC', serif; letter-spacing: .055em; }
-.nav-coordinate { position: absolute; top: 3px; right: 5px; font: 6px/1 var(--latin); letter-spacing: .08em; color: #b7a4df85; }
+.nav-label { font: 500 15px/1.4 'Noto Serif TC', 'Songti TC', serif; letter-spacing: .055em; }
+.nav-coordinate { position: absolute; top: 3px; right: 5px; font: 7px/1 var(--latin); letter-spacing: .08em; color: #b7a4df85; }
 .top-nav a:is(:hover, :focus-visible, [aria-current]) { color: #f3dfb8; border-color: #d9c09355; }
 .top-nav a:is(:hover, :focus-visible, [aria-current])::before { opacity: 1; }
 .top-nav a:is(:hover, :focus-visible, [aria-current])::after { opacity: .85; transform: scaleX(1); }
@@ -66,24 +66,27 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c7
   transition: border-color .25s, background-color .25s, color .25s, box-shadow .25s;
 }
 .github-mark { width: 19px; height: 19px; flex: 0 0 auto; }
-.github-label { font: 9px/1 var(--latin); letter-spacing: .12em; }
+.github-label { font: 10px/1 var(--latin); letter-spacing: .12em; }
 .github-arrow { font: 16px/1 var(--latin); color: var(--muted); }
 .header-github:is(:hover, :focus-visible) { color: #fff5df; border-color: #d9c0939c; background: #d9c0930d; box-shadow: 0 0 18px #d9c09312; }
-.header-contact { display: flex; align-items: center; gap: 12px; border: 1px solid #c7b49559; padding: 11px 13px; border-radius: 3px; color: var(--accent); font-size: 8px; letter-spacing: .1em; white-space: nowrap; transition: background .25s; }
+.header-contact { display: flex; align-items: center; gap: 12px; border: 1px solid #c7b49559; padding: 11px 13px; border-radius: 3px; color: var(--accent); font-size: 9px; letter-spacing: .1em; white-space: nowrap; transition: background .25s; }
 .header-contact > span { font-size: 16px; }
 .header-contact:hover { background: #d9c09312; }
 @media (max-width: 1350px) {
+  .site-header { padding-inline: clamp(24px, 3vw, 40px); }
   .header-contact { display: none; }
 }
 @media (max-width: 1100px) {
+  /* Keep the enlarged labels and full identity in separate centered tracks. */
+  .site-header { padding-inline: clamp(20px, 3vw, 32px); }
   .brand { gap: 9px; }
-  .brand-wordmark { font-size: 9px; letter-spacing: .1em; }
-  .brand-wordmark > span { font-size: 6px; }
+  .brand-wordmark { font-size: 10px; letter-spacing: .1em; }
+  .brand-wordmark > span { font-size: 7px; }
   .top-nav { gap: 0; padding: 3px; }
   .top-nav a { gap: 5px; padding-inline: 6px 9px; min-height: 50px; }
   .nav-emblem { width: 25px; height: 25px; }
   .nav-emblem .chapter-glyph { width: 21px; height: 21px; }
-  .nav-label { font-size: 12px; letter-spacing: .035em; }
+  .nav-label { font-size: 14px; letter-spacing: .035em; }
   .header-github { padding: 9px; }
   .github-label, .github-arrow { display: none; }
 }
@@ -91,7 +94,7 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c7
   .site-header { grid-template-columns: 44px minmax(0, 1fr) 44px; grid-template-rows: 44px 48px; gap: 0; padding: 4px 14px; border-bottom: 0; }
   .brand { grid-column: 2; grid-row: 1; justify-self: center; gap: 8px; }
   .brand-symbol { width: 22px; height: 22px; }
-  .brand-wordmark { font-size: 9px; letter-spacing: .15em; }
+  .brand-wordmark { font-size: 10px; letter-spacing: .15em; }
   .brand-wordmark > span { display: none; }
   .header-actions { grid-column: 3; grid-row: 1; justify-self: end; }
   .header-github { min-width: 44px; min-height: 44px; padding: 10px; border-color: transparent; background: transparent; }
@@ -100,14 +103,14 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c7
   .top-nav a { flex-direction: column; gap: 1px; padding: 2px 1px; min-height: 44px; }
   .nav-emblem { width: 21px; height: 21px; border: 0; box-shadow: none !important; }
   .nav-emblem .chapter-glyph { width: 21px; height: 21px; }
-  .nav-label { font-size: 11px; line-height: 1.25; letter-spacing: .025em; }
+  .nav-label { font-size: 12px; line-height: 1.25; letter-spacing: .025em; }
   .nav-coordinate { display: none; }
   .top-nav a::after { bottom: 0; left: 20%; right: 20%; }
 }
 @media (max-width: 350px) {
   .site-header { padding-inline: 10px; }
-  .brand-wordmark { font-size: 8px; letter-spacing: .12em; }
-  .nav-label { font-size: 10px; letter-spacing: .01em; }
+  .brand-wordmark { font-size: 9px; letter-spacing: .12em; }
+  .nav-label { font-size: 11px; letter-spacing: .01em; }
 }
 @media (prefers-reduced-motion: reduce) {
   .site-header *, .site-header *::before, .site-header *::after { transition: none !important; }

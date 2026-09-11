@@ -33,9 +33,7 @@ const { events = timelineEvents } = Astro.props;
             <circle cx="243" cy="64" r="1.5" />
           </g>
         </svg>
-        <span>EVERY STEP, A NEW COORDINATE.</span>
       </div>
-      {timelineCopy.note && <p class="timeline-note">{timelineCopy.note}</p>}
     </div>
 
     {events.length > 0 ? (

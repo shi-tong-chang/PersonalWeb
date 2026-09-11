@@ -40,12 +40,13 @@ async function expectFocusedTabBetweenHeaderAndDock(tab: Locator) {
   }), { message: 'The selected control must not be obscured by the header or fixed chapter dock.' }).toBe(true);
 }
 
-test('the expanded project stage removes its old slogan while preserving its chapter name and ten slots', async ({ page }) => {
+test('the expanded project stage keeps larger readable type and removes visual footers without losing ten slots', async ({ page }) => {
   for (const viewport of [
     { width: 1440, height: 900 },
     { width: 1366, height: 768 },
     { width: 900, height: 700 },
     { width: 390, height: 844 },
+    { width: 360, height: 640 },
   ]) {
     await test.step(`${viewport.width} × ${viewport.height}`, async () => {
       await page.setViewportSize(viewport);
@@ -64,11 +65,37 @@ test('the expanded project stage removes its old slogan while preserving its cha
       await expect(gallery).toHaveAccessibleName(/專案經歷/);
       await expect(gallery.getByRole('tab')).toHaveCount(10);
       await expect(gallery.locator('[data-project-panel]')).toHaveCount(10);
+      await expect(gallery.locator('.visual-caption')).toHaveCount(0);
+      await expect(gallery).not.toContainText(/DESIGN MEETS DEVELOPMENT|A STAR YET TO BE NAMED/);
+      await expect(gallery.locator('.canvas-coordinate')).toHaveCount(20);
+      await expect(gallery.locator('.frame-bar')).toHaveCount(10);
+      await expect(gallery.locator('[data-project-current]')).toHaveText('01');
+      await expect(gallery.locator('.library-total')).toHaveText('/ 10');
       await expect(panel).toHaveCount(1);
       await expect(panel).toHaveAttribute('id', 'project-panel-comfy-blend');
       await expect(canvas.locator(':scope > img')).toHaveCount(0);
       await expect(canvas.locator('.project-blank')).toBeVisible();
       await expect(canvas.locator('.blank-subtitle')).toHaveText('專案圖像尚未提供');
+      const compactDesktop = viewport.width >= 900 && viewport.height <= 800;
+      for (const [selector, minimum] of [
+        ['.project-description', 16],
+        ['.project-poem', compactDesktop ? 17 : 20],
+        ['.project-edition', compactDesktop ? 11 : 13],
+        ['.project-state', compactDesktop ? 11 : 13],
+        ['.project-category', compactDesktop ? 11 : 12],
+        ['.tags li', compactDesktop ? 11 : 12],
+        ['.project-actions .text-link', 14],
+      ] as const) {
+        expect(await panel.locator(selector).first().evaluate(element => parseFloat(getComputedStyle(element).fontSize)),
+          `${selector} must retain its enlarged type at ${viewport.width} × ${viewport.height}`)
+          .toBeGreaterThanOrEqual(minimum);
+      }
+      for (const [selector, minimum] of [['.library-caption', 12], ['.tab-label', 12], ['.tab-label > small', 11]] as const) {
+        expect(await gallery.locator(selector).first().evaluate(element => parseFloat(getComputedStyle(element).fontSize)))
+          .toBeGreaterThanOrEqual(minimum);
+      }
+      expect(await panel.locator('.project-description').evaluate(element => element.scrollHeight <= element.clientHeight + 1))
+        .toBe(true);
       for (const surface of [heading, story, visual]) {
         await expect(surface).toBeVisible();
         await expect.poll(() => surface.evaluate(element => {
@@ -527,6 +554,8 @@ test('without JavaScript or web fonts all ten project articles remain readable i
     await expect(page.locator('#projects details, #projects summary')).toHaveCount(0);
     const panels = gallery.getByRole('article');
     await expect(panels).toHaveCount(10);
+    await expect(gallery.locator('.visual-caption')).toHaveCount(0);
+    await expect(gallery).not.toContainText(/DESIGN MEETS DEVELOPMENT|A STAR YET TO BE NAMED/);
     await expect(gallery.locator('[data-project-panel][inert]')).toHaveCount(0);
     for (const [index, id, name] of [[0, 'comfy-blend', 'ComfyBlend'], [1, 'personal-web', 'PersonalWeb']] as const) {
       await expect(panels.nth(index)).toHaveAttribute('id', `project-panel-${id}`);
@@ -539,6 +568,8 @@ test('without JavaScript or web fonts all ten project articles remain readable i
     await expect(panels.nth(1).locator('.project-canvas > img')).toHaveAttribute('src', '/PersonalWeb/assets/orbital-atlas-v1.svg');
     for (const panel of await panels.all()) {
       await expect(panel).toBeVisible();
+      expect(await panel.locator('.project-description').evaluate(element => parseFloat(getComputedStyle(element).fontSize)))
+        .toBeGreaterThanOrEqual(16);
       await panel.locator('h3.project-name').scrollIntoViewIfNeeded();
       await expect(panel.locator('h3.project-name')).toBeInViewport();
     }

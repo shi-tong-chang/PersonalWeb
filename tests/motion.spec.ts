@@ -321,7 +321,7 @@ test('the fourth chapter is an ordered timeline with honest undated placeholders
   await expect(events.locator('.timeline-date')).toHaveText(['日期待填', '日期待填', '日期待填', '日期待填']);
   // Unknown dates must not be represented by invented machine-readable dates.
   await expect(events.locator('time[datetime]')).toHaveCount(0);
-  await expect(page.locator('.timeline-note')).toContainText('內容預留');
+  await expect(page.locator('.timeline-note')).toHaveCount(0);
   for (const event of await events.all()) await betweenHeaderAndDock(event);
   await page.keyboard.press('PageDown');
   await chapterAtTop(page, 'contact');

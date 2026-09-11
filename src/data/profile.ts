@@ -34,20 +34,17 @@ export const copy = {
   projects: {
     eyebrow: '02 / PROJECT ATLAS',
     action: '查看 GitHub 專案',
-    footer: '作品持續累積中，其餘位置留給下一次探索。',
   },
   skills: {
     eyebrow: '03 / CONNECTING THE DOTS',
     heading: ['不只一種視角', '也不只一種可能。'],
     subtitle: '感性讓我開始，理性讓我走得更遠。',
-    note: '這裡先放探索方向，具體技能與經歷會隨作品逐步補上。',
   },
   contact: {
     eyebrow: '05 / THE NEXT CHAPTER',
     heading: ['下一個故事', '從一次對話開始。'],
     introduction: '聊一個想法、交換一點靈感，或只是打聲招呼。期待在這片星海，與你相遇。',
     action: '到 GitHub 找我',
-    signature: 'STAY CURIOUS. KEEP CREATING.',
   },
 };
 

@@ -14,7 +14,6 @@ export const timelineCopy = {
   eyebrow: '04 / TRACES IN TIME',
   heading: ['把走過的路', '連成自己的星圖。'],
   introduction: '那些重要的起點、轉折與收穫，都值得留下一個座標。',
-  note: '以下為內容預留，日期與經歷將陸續補上。',
   emptyTitle: '大事記準備中。',
   emptyDescription: '留一點空間，給接下來值得記錄的時刻。',
 };

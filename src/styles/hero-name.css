@@ -7,7 +7,7 @@
   width: fit-content;
   max-width: 100%;
   font-family: 'Noto Serif TC', 'Songti TC', 'PMingLiU', serif;
-  font-size: clamp(62px, 8.5vw, 112px);
+  font-size: clamp(66px, 9vw, 118px);
   font-weight: 500;
   line-height: 1.36;
   letter-spacing: .13em;
@@ -19,7 +19,7 @@
   width: fit-content;
   max-width: 100%;
   margin-top: 14px;
-  font: 500 clamp(27px, 3vw, 43px)/1.25 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font: 500 clamp(29px, 3.2vw, 46px)/1.25 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
   letter-spacing: .17em;
   color: #ddc7a5;
   white-space: nowrap;
@@ -40,8 +40,8 @@
 
 /* Text can also be edited to a longer name without overflowing its column. */
 @supports (font-size: 1cqi) {
-  .hero-name-zh { font-size: min(clamp(62px, 8.5vw, 112px), calc(98cqi / (var(--name-count, 3) * 1.13))); }
-  .hero-name-en { font-size: min(clamp(27px, 3vw, 43px), 6.4cqi); }
+  .hero-name-zh { font-size: min(clamp(66px, 9vw, 118px), calc(98cqi / (var(--name-count, 3) * 1.13))); }
+  .hero-name-en { font-size: min(clamp(29px, 3.2vw, 46px), 6.7cqi); }
 }
 @supports (background-clip: text) {
   .hero-name-zh {
@@ -50,19 +50,19 @@
     color: transparent;
   }
 }
-.is-paged .hero-name-zh { font-size: clamp(58px, min(8.5vw, 12svh), 112px); }
+.is-paged .hero-name-zh { font-size: clamp(62px, min(9vw, 12.6svh), 118px); }
 .is-paged .hero-name-en { margin-top: 10px; }
 .is-paged .hero-name-signature { margin-top: 20px; }
 @supports (font-size: 1cqi) {
-  .is-paged .hero-name-zh { font-size: min(clamp(58px, min(8.5vw, 12svh), 112px), calc(98cqi / (var(--name-count, 3) * 1.13))); }
+  .is-paged .hero-name-zh { font-size: min(clamp(62px, min(9vw, 12.6svh), 118px), calc(98cqi / (var(--name-count, 3) * 1.13))); }
 }
 @media (max-width: 760px) {
-  .hero-name-zh { font-size: clamp(56px, 17.5vw, 88px); letter-spacing: .11em; }
-  .hero-name-en { margin-top: 13px; font-size: clamp(24px, 6vw, 32px); letter-spacing: .14em; }
+  .hero-name-zh { font-size: clamp(60px, 18.5vw, 94px); letter-spacing: .11em; }
+  .hero-name-en { margin-top: 13px; font-size: clamp(26px, 6.4vw, 35px); letter-spacing: .14em; }
   .hero-name-signature { width: 160px; margin-top: 22px; }
   @supports (font-size: 1cqi) {
-    .hero-name-zh { font-size: min(clamp(56px, 17.5vw, 88px), calc(98cqi / (var(--name-count, 3) * 1.11))); }
-    .hero-name-en { font-size: min(clamp(24px, 6vw, 32px), 7.4cqi); }
+    .hero-name-zh { font-size: min(clamp(60px, 18.5vw, 94px), calc(98cqi / (var(--name-count, 3) * 1.11))); }
+    .hero-name-en { font-size: min(clamp(26px, 6.4vw, 35px), 7.8cqi); }
   }
 }
 @media (forced-colors: active) {
