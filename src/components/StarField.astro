@@ -1,0 +1,16 @@
+---
+// Deterministic, static SVG. No particle loop, canvas, or client-side randomness.
+const { chart = 'projects', offset = 0 } = Astro.props;
+const stars = Array.from({ length: 58 }, (_, i) => ({
+  x: (i * 233 + offset * 71) % 1440,
+  y: (i * i * 37 + 53 + offset * 113) % 900,
+  r: i % 9 === 0 ? 1.4 : .7,
+  opacity: .12 + (i % 5) * .07,
+}));
+---
+<svg class="chapter-sky" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+  <defs><radialGradient id={`haze-${chart}`}><stop stop-color="#514a7a" stop-opacity=".21"/><stop offset="1" stop-color="#514a7a" stop-opacity="0"/></radialGradient></defs>
+  <ellipse cx={1030 - offset * 180} cy="340" rx="700" ry="520" fill={`url(#haze-${chart})`} />
+  <g fill="#e3daf2">{stars.map(star => <circle cx={star.x} cy={star.y} r={star.r} opacity={star.opacity}/>)}</g>
+  <g fill="none" stroke="#b7a4df" stroke-width=".6" opacity=".16"><path d="m1150 123 75 50 84-23 65 95-40 73"/><circle cx="1225" cy="173" r="4"/><path d="m59 703 68-29 34 83 73-17"/></g>
+</svg>

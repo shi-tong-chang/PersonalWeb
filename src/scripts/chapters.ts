@@ -4,6 +4,10 @@ const header = document.querySelector<HTMLElement>('.site-header');
 const hero = document.querySelector<HTMLElement>('#about');
 const currentChapter = document.querySelector<HTMLElement>('#current-chapter');
 const progressFill = document.querySelector<HTMLElement>('#progress-fill');
+const nextChapter = document.querySelector<HTMLAnchorElement>('#next-chapter');
+const nextLabel = document.querySelector<HTMLElement>('#next-label');
+const nextArrow = document.querySelector<HTMLElement>('#next-arrow');
+const chapterDock = document.querySelector<HTMLElement>('.chapter-dock');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const pagedMedia = matchMedia('(min-width: 900px) and (min-height: 700px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
 
@@ -25,6 +29,7 @@ let wheelTotal = 0;
 let gestureConsumed = false;
 let gestureReadsChapter = false;
 let wheelLockedUntil = 0;
+let nativeHashTimer = 0;
 const readingKeys = new Set<string>();
 const consumedKeys = new Set<string>();
 
@@ -71,6 +76,14 @@ function setActiveChapter(index: number) {
   });
   if (currentChapter) currentChapter.textContent = String(index + 1).padStart(2, '0');
   if (progressFill) progressFill.style.width = String(((index + 1) / sections.length) * 100) + '%';
+  const isLastChapter = index === sections.length - 1;
+  const nextIndex = (index + 1) % sections.length;
+  if (nextChapter) {
+    nextChapter.href = '#' + sections[nextIndex].id;
+    nextChapter.setAttribute('aria-label', isLastChapter ? '回到開場：第一章，個人介紹' : '下一章：第 ' + (nextIndex + 1) + ' 章');
+  }
+  if (nextLabel) nextLabel.textContent = isLastChapter ? '回到開場' : '下一章';
+  if (nextArrow) nextArrow.textContent = isLastChapter ? '↑' : '↓';
 }
 
 function updateSceneVisibility() {
@@ -111,6 +124,16 @@ function update() {
 
 function scheduleUpdate() {
   if (!frame && !document.hidden) frame = requestAnimationFrame(update);
+}
+
+function syncSettledNativeHash() {
+  nativeHashTimer = 0;
+  if (paged || tween || layoutFrame || document.hidden || !hasInteracted || !sections.length) return;
+  // Keep project/archive deep links intact. A chapter fragment follows reading
+  // only after native scrolling settles, never during an anchor's smooth scroll.
+  if (location.hash && hashIndex() < 0) return;
+  const hash = '#' + sections[indexAtReadingLine()].id;
+  if (location.hash !== hash) history.replaceState(history.state, '', hash);
 }
 
 function resetWheelGesture() {
@@ -215,9 +238,10 @@ document.addEventListener('click', event => {
 // One desktop wheel gesture means one chapter. Trackpad tails are consumed,
 // including tails that arrive while the 650ms transition is still running.
 document.addEventListener('wheel', event => {
-  if (!paged || event.defaultPrevented || event.ctrlKey || event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY) || event.deltaY === 0) return;
-  event.preventDefault();
+  if (event.defaultPrevented || event.ctrlKey || event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY) || event.deltaY === 0) return;
   hasInteracted = true;
+  if (!paged) return;
+  event.preventDefault();
   const now = performance.now();
   const freshGesture = now - lastWheelAt > gestureIdle;
   if (freshGesture) {
@@ -256,7 +280,7 @@ document.addEventListener('wheel', event => {
 }, { passive: false });
 
 document.addEventListener('keydown', event => {
-  if (!paged || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
   if (!(event.target instanceof Element) || event.target.closest('input, textarea, select, button, summary, [contenteditable]:not([contenteditable="false"]), [role="tablist"], [role="slider"], [role="listbox"], [role="combobox"], [role="menu"]')) return;
   const index = tween?.index ?? indexAtReadingLine();
   const destinations: Record<string, number> = {
@@ -268,8 +292,9 @@ document.addEventListener('keydown', event => {
     End: sections.length - 1,
   };
   if (!(event.key in destinations)) return;
-  event.preventDefault();
   hasInteracted = true;
+  if (!paged) return;
+  event.preventDefault();
   if (!event.repeat) {
     readingKeys.delete(event.key);
     consumedKeys.delete(event.key);
@@ -282,7 +307,7 @@ document.addEventListener('keydown', event => {
   const canRead = direction !== 0 && end - start > 2 && (direction > 0 ? window.scrollY < end - 2 : window.scrollY > start + 2);
   if (!tween && canRead) {
     readingKeys.add(event.key);
-    const distance = event.key.startsWith('Page') ? Math.max(40, innerHeight - (header?.getBoundingClientRect().height ?? 0) - 40) : 40;
+    const distance = event.key.startsWith('Page') ? Math.max(40, innerHeight - (header?.getBoundingClientRect().height ?? 0) - (chapterDock?.getBoundingClientRect().height ?? 0) - 40) : 40;
     scrollInstant(Math.max(start, Math.min(end, window.scrollY + distance * direction)));
     scheduleUpdate();
     return;
@@ -345,7 +370,12 @@ function configureLayout() {
   });
 }
 
-window.addEventListener('scroll', scheduleUpdate, { passive: true });
+window.addEventListener('scroll', () => {
+  scheduleUpdate();
+  clearTimeout(nativeHashTimer);
+  nativeHashTimer = 0;
+  if (!paged && hasInteracted) nativeHashTimer = window.setTimeout(syncSettledNativeHash, gestureIdle);
+}, { passive: true });
 window.addEventListener('resize', configureLayout, { passive: true });
 pagedMedia.addEventListener('change', configureLayout);
 reducedMotion.addEventListener('change', scheduleUpdate);
@@ -381,6 +411,8 @@ document.addEventListener('visibilitychange', () => {
     consumedKeys.clear();
     cancelAnimationFrame(frame);
     cancelAnimationFrame(layoutFrame);
+    clearTimeout(nativeHashTimer);
+    nativeHashTimer = 0;
     frame = 0;
     layoutFrame = 0;
   } else {
@@ -395,6 +427,8 @@ window.addEventListener('pagehide', () => {
   consumedKeys.clear();
   cancelAnimationFrame(frame);
   cancelAnimationFrame(layoutFrame);
+  clearTimeout(nativeHashTimer);
+  nativeHashTimer = 0;
   frame = 0;
   layoutFrame = 0;
   hero?.classList.remove('is-scene-visible');

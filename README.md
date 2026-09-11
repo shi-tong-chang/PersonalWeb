@@ -1,8 +1,8 @@
 # PersonalWeb
 
-星海敘事系個人網站：安靜的深藍夜海開場，往下接清楚可讀的專案、探索方向與聯繫方式。
+Orbital Atlas 個人星圖網站：以深藍星空、淡紫星系與香檳金星軌，串起個人介紹、作品、探索方向與聯繫方式。
 
-目前工作分支是 `feat/project-showcase`。星海版尚未合併至 `main`；[正式網站](https://shi-tong-chang.github.io/PersonalWeb/) 在 main 部署前仍可能是先前的水墨版。
+星圖版由 `feat/next-iteration` 開發，透過 `main` 發布至[正式網站](https://shi-tong-chang.github.io/PersonalWeb/)。只有 `main` 的推送會觸發正式站部署；功能分支可繼續獨立開發。受目前環境的 `.git` 唯讀限制，分支操作使用可寫入的 Git 副本；工作資料夾中的原 `.git` 資訊不代表發布分支的最新狀態。
 
 ## 開發
 
@@ -28,10 +28,11 @@ npm run test:e2e
 - `src/data/projects.ts`：10 個可編輯的專案位置，可任意追加；`visible` 控制顯示，`featured` 控制首頁精選（取前 3 件）。目前 1 件真實作品、9 個明確標示的預留位置。
 - `src/pages/index.astro`：首頁 → 3 件精選 → 可展開作品庫 → 探索方向 → 聯繫方式。
 - `src/components/ProjectGallery.astro`、`src/styles/projects.css`、`src/scripts/projects.ts`：完整作品庫的主舞台、水平選擇列、鍵盤／懸停互動。
-- `src/styles/global.css`：全站色彩、字型、版型、手機裁切與少量星光動態。
+- `src/styles/global.css`：全站宇宙色彩、字型、版型、手機裁切、固定章節索引／進度與少量星光動態。
 - `src/scripts/chapters.ts`：桌面整頁切換、手勢鎖定、原生捲動降級、錨點焦點、場景退移與可選的 Email 複製。
-- `public/assets/star-sea-v1.webp`：原創夜海主視覺，1672 × 941，約 97 KB；首頁、作品卡與頁尾共用。
-- [美術與完整生成提示詞](docs/star-sea-art-direction.md)、[專案編輯指南](docs/projects.md)。
+- `public/assets/orbital-atlas-v1.svg`：原創星系主視覺，1600 × 1000，約 111 KB；首頁與作品卡共用。分享預覽另用 PNG。
+- `src/components/StarField.astro`：建置時繪製靜態星空，不需要客戶端粒子迴圈。
+- [星圖美術方向](docs/orbital-atlas-art-direction.md)、[專案編輯指南](docs/projects.md)、[歷史夜海美術與生成提示詞](docs/star-sea-art-direction.md)。
 
 `profile.biography` 與 `profile.email` 可留空。設定 Email 後會顯示寄信與複製功能，請只放願意公開的地址。具體技能可填在 `skills` 的標籤與說明。
 
@@ -41,13 +42,13 @@ npm run test:e2e
 
 開啟完整作品庫或填入長文後，該章節會隨內容增高，先讓讀者在章節內捲動；到達上下邊界後，下一次新手勢才切換章節。其餘章節仍維持整頁切換。手機、觸控裝置、較短視窗、減少動態效果或停用 JavaScript 時使用原生連續捲動，不截斷內容。
 
-桌面也支援上下方向鍵與 Page Up / Down 切頁，Home / End 跳至首末章；輸入欄位與專案頁籤的鍵盤操作不受攔截。首頁插畫輕微退移，姓名與文案保持原生文字；3 個星光點在離屏或背景分頁時暫停。
+桌面也支援上下方向鍵與 Page Up / Down 切頁，Home / End 跳至首末章；輸入欄位與專案頁籤的鍵盤操作不受攔截。右側索引與底部章節數／進度同步更新；下一章按鈕在末章改為回到開場，滾輪不循環。首頁星圖輕微退移，姓名與文案保持原生文字；3 個星光點在離屏或背景分頁時暫停。
 
 首頁精選卡開啟完整作品庫並選中對應作品；完整作品庫以原生 `details` 控制展開。左右邊緣懸停可平滑捲動專案列，離開、到達邊界、關閉作品庫或視窗失焦時停止。觸控可直接左右滑動；鍵盤支援 ← / →、Home / End、空白鍵。水平滾輪與 Shift＋滾輪只操作專案列，不觸發章節切換。
 
 快速選取只保留最後一次操作，不堆疊動畫。減少動態效果會停用場景退移、星光、轉場與懸停自動捲動，保留點按和鍵盤操作。JavaScript 不可用時，章節和原生導覽照常可用，手動展開作品庫後能閱讀全部作品。長文不截斷。
 
-字型使用 Google Fonts 的 DM Sans 與 Noto Sans TC；離線或載入失敗時退回系統字型。主視覺為內建 imagegen 生成，其餘星芒、軌道圖形與框線為 SVG／CSS。舊水墨資產與美術文件保留作歷史參考，星海版沒有引用。
+字型使用 Google Fonts 的 DM Serif Display、DM Sans 與 Noto Sans TC；離線或載入失敗時退回系統字型。主視覺、星芒、軌道圖形與框線為原創 SVG／CSS。參考專案僅作色彩和氛圍研究，沒有複製程式或素材。舊水墨與夜海資產及美術文件保留作歷史參考，星圖版沒有引用。
 
 ## GitHub Pages
 

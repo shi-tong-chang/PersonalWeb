@@ -26,6 +26,15 @@ async function expectTabInsideTrack(tab: Locator) {
   }), { message: 'The selected project must be fully visible in its horizontal selection rail.' }).toBe(true);
 }
 
+async function expectFocusedTabBetweenHeaderAndDock(tab: Locator) {
+  await expect.poll(() => tab.evaluate(element => {
+    const bounds = element.getBoundingClientRect();
+    const header = document.querySelector('.site-header')!.getBoundingClientRect();
+    const dock = document.querySelector('.chapter-dock')!.getBoundingClientRect();
+    return bounds.height > 0 && bounds.top >= header.bottom && bounds.bottom <= dock.top;
+  }), { message: 'The selected control must not be obscured by the header or fixed chapter dock.' }).toBe(true);
+}
+
 test('ten project slots expose one accessible panel and clearly mark nine reservations', async ({ page }) => {
   await openProjects(page);
   const gallery = page.locator('[data-project-gallery]');
@@ -37,6 +46,8 @@ test('ten project slots expose one accessible panel and clearly mark nine reserv
   await expect(gallery.getByRole('tabpanel')).toHaveCount(1);
   await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
   await expect(gallery.getByRole('tabpanel')).toHaveAccessibleName(/PersonalWeb/);
+  await expect(gallery.getByRole('tabpanel').locator('.project-canvas > img'))
+    .toHaveAttribute('src', '/PersonalWeb/assets/orbital-atlas-v1.svg');
   await expect(gallery.getByRole('tabpanel').getByRole('link', { name: /查看 GitHub 專案/ }))
     .toHaveAttribute('href', 'https://github.com/shi-tong-chang/PersonalWeb');
 
@@ -104,6 +115,7 @@ test('project Home and End keys reveal their tabs without navigating chapters', 
   await expect(tabs.last()).toBeFocused();
   await expect(tabs.last()).toHaveAttribute('aria-selected', 'true');
   await expectTabInsideTrack(tabs.last());
+  await expectFocusedTabBetweenHeaderAndDock(tabs.last());
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
   await expect(page).toHaveURL(/#projects$/);
 
@@ -111,6 +123,7 @@ test('project Home and End keys reveal their tabs without navigating chapters', 
   await expect(tabs.first()).toBeFocused();
   await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
   await expectTabInsideTrack(tabs.first());
+  await expectFocusedTabBetweenHeaderAndDock(tabs.first());
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
   await expect(page).toHaveURL(/#projects$/);
 });
@@ -226,12 +239,13 @@ test('mobile touch controls reach the tenth project without page overflow', asyn
     await expect(right).toHaveAttribute('aria-disabled', 'true');
     const lastTab = page.locator('[data-project-gallery]').getByRole('tab').last();
     await expectTabInsideTrack(lastTab);
+    await expectFocusedTabBetweenHeaderAndDock(lastTab);
     await lastTab.tap();
     await expect(lastTab).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('tabpanel')).toHaveCount(1);
     await expect(page.getByRole('tabpanel')).toHaveAccessibleName(/專案 10/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).tap();
+    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).tap();
     await expect(page.locator('#contact')).toBeInViewport();
   } finally {
     await context.close();
@@ -256,6 +270,7 @@ test('reduced motion disables hover scrolling while preserving explicit controls
   await expect(tabs.last()).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('tabpanel')).toHaveAccessibleName(/專案 10/);
   await expectTabInsideTrack(tabs.last());
+  await expectFocusedTabBetweenHeaderAndDock(tabs.last());
 });
 
 test('without JavaScript or web fonts all ten project articles remain readable in natural flow', async ({ browser }) => {
@@ -274,7 +289,7 @@ test('without JavaScript or web fonts all ten project articles remain readable i
     await archive.locator(':scope > summary').click();
     await expect(archive).toHaveAttribute('open');
     const gallery = page.locator('[data-project-gallery]');
-    await expect(gallery).not.toHaveClass(/is-enhanced/);
+  await expect(gallery).not.toHaveClass(/is-enhanced/);
     const panels = gallery.getByRole('article');
     await expect(panels).toHaveCount(10);
     await expect(gallery.locator('[data-project-panel][inert]')).toHaveCount(0);
@@ -285,7 +300,7 @@ test('without JavaScript or web fonts all ten project articles remain readable i
     }
     await expect(panels.last()).toHaveAccessibleName('專案 10');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
+    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).click();
     await expect(page.locator('#contact')).toBeInViewport();
   } finally {
     await context.close();

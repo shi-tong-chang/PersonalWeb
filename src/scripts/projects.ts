@@ -298,8 +298,11 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
       const topInset = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
       const galleryTop = gallery.getBoundingClientRect().top + scrollY;
       const tabBottom = tabs[index].getBoundingClientRect().bottom + scrollY;
+      const dockBounds = document.querySelector<HTMLElement>('.chapter-dock')?.getBoundingClientRect();
+      const visibleBottom = dockBounds && dockBounds.height > 0
+        ? Math.max(0, Math.min(innerHeight, dockBounds.top)) : innerHeight;
       window.scrollTo({
-        top: Math.max(0, galleryTop - topInset, tabBottom - innerHeight + 24),
+        top: Math.max(0, galleryTop - topInset, tabBottom - visibleBottom + 24),
         behavior: projectReducedMotion.matches ? 'instant' : 'smooth',
       });
     });

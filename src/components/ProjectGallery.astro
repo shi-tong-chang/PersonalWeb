@@ -8,10 +8,10 @@ const asset = (path: string) => /^(https?:\/\/|data:)/i.test(path) ? path : base
 const number = (index: number) => String(index + 1).padStart(2, '0');
 ---
 
-<div class="project-gallery" data-project-gallery aria-labelledby="archive-heading">
+<div class="project-gallery" data-project-gallery role="region" aria-labelledby="archive-heading">
   <div class="gallery-heading">
-    <div><p class="eyebrow">THE PROJECT ARCHIVE</p><h3 id="archive-heading">每個想法，都有自己的位置。</h3></div>
-    <p class="gallery-note">持續更新的作品目錄</p>
+    <div><p class="eyebrow"><span class="atlas-heading-star" aria-hidden="true">✧</span>THE PROJECT CONSTELLATION</p><h3 id="archive-heading">每個想法，都有自己的星軌。</h3></div>
+    <p class="gallery-note"><span aria-hidden="true">CHART / {entries.length ? '01 — ' + number(entries.length - 1) : '00'}</span>持續更新的作品星圖</p>
   </div>
 
   {entries.length ? <>
@@ -48,12 +48,21 @@ const number = (index: number) => String(index + 1).padStart(2, '0');
           </div>
           <div class:list={['project-visual', { 'is-reserved': project.status === 'reserved' }]}>
             <div class="project-frame">
-              <div class="frame-bar" aria-hidden="true"><span class="frame-dots"><i></i><i></i><i></i></span><span>{project.status === 'reserved' ? 'A NEW POSSIBILITY' : 'PERSONAL UNIVERSE'}</span><span>{number(index)}</span></div>
+              <div class="frame-bar" aria-hidden="true"><span class="frame-reticle">＋<i></i></span><span>{project.status === 'reserved' ? 'UNMAPPED POSSIBILITY' : 'A PERSONAL UNIVERSE'}</span><span>FIELD / {number(index)}</span></div>
               <div class="project-canvas">
-                {project.cover ? <img src={asset(project.cover.src)} alt={project.cover.alt} width="1672" height="941" loading="lazy" decoding="async" style={{ 'object-fit': project.cover.fit ?? 'cover', 'object-position': project.cover.position ?? 'center' }} /> : <div class="project-blank" aria-hidden="true"><span class="blank-grid"></span><span class="blank-orbit orbit-one"></span><span class="blank-orbit orbit-two"></span><span class="blank-star">✦</span><span class="blank-index">{number(index)}</span><span class="blank-title">{project.status === 'reserved' ? 'UNTOLD STORIES' : 'PROJECT PREVIEW'}</span><span class="blank-subtitle">{project.status === 'reserved' ? '為新的可能，留一個位置。' : '專案圖像尚未提供'}</span></div>}
+                {project.cover ? <img src={asset(project.cover.src)} alt={project.cover.alt} width="1672" height="941" loading="lazy" decoding="async" style={{ 'object-fit': project.cover.fit ?? 'cover', 'object-position': project.cover.position ?? 'center' }} /> : <div class="project-blank" aria-hidden="true">
+                  <span class="blank-grid"></span>
+                  <svg class="blank-constellation" viewBox="0 0 400 260" fill="none">
+                    <g class="atlas-orbits"><circle cx="238" cy="124" r="75" stroke-dasharray="2 6" /><ellipse cx="238" cy="124" rx="123" ry="42" transform="rotate(-28 238 124)" /><ellipse cx="238" cy="124" rx="104" ry="48" transform="rotate(36 238 124)" /><path d="M92 101 154 78 211 126 263 91 325 128M154 78 167 171 211 126 274 188" /></g>
+                    <g class="atlas-stars"><circle cx="92" cy="101" r="2" /><circle cx="154" cy="78" r="3" /><circle cx="211" cy="126" r="2.5" /><circle cx="263" cy="91" r="2" /><circle cx="325" cy="128" r="2.5" /><circle cx="167" cy="171" r="2" /><circle cx="274" cy="188" r="3" /></g>
+                    <path class="atlas-north-star" d="m238 101 4.5 18.5L261 124l-18.5 4.5L238 147l-4.5-18.5L215 124l18.5-4.5Z" />
+                  </svg>
+                  <span class="blank-index">{number(index)}</span><span class="blank-title">{project.status === 'reserved' ? 'AN UNWRITTEN ORBIT' : 'PROJECT PREVIEW'}</span><span class="blank-subtitle">{project.status === 'reserved' ? '為新的可能，留一個位置。' : '專案圖像尚未提供'}</span>
+                </div>}
+                <span class="canvas-coordinate coordinate-top" aria-hidden="true">α / {number(index)}.00</span><span class="canvas-coordinate coordinate-bottom" aria-hidden="true">STC — CELESTIAL ARCHIVE</span>
               </div>
             </div>
-            <div class="visual-caption" aria-hidden="true"><span>{project.status === 'reserved' ? 'ROOM FOR WHAT COMES NEXT' : 'DESIGN MEETS DEVELOPMENT'}</span><span>{number(index)} / {number(entries.length - 1)}</span></div>
+            <div class="visual-caption" aria-hidden="true"><span>{project.status === 'reserved' ? 'A STAR YET TO BE NAMED' : 'DESIGN MEETS DEVELOPMENT'}</span><span>{number(index)} / {number(entries.length - 1)}<i></i>STC</span></div>
           </div>
         </div>
       </article>)}

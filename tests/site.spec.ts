@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 const siteURL = 'http://127.0.0.1:4321/PersonalWeb/';
 
@@ -10,7 +10,17 @@ async function expectChapterAtTop(page: Page, id: string) {
   await expect(page.locator('body')).toHaveAttribute('data-theme', id);
 }
 
-test('the owner is the hero and the star-sea artwork loads without runtime errors', async ({ page }) => {
+async function expectBetweenHeaderAndDock(element: Locator) {
+  await expect.poll(() => element.evaluate(target => {
+    const bounds = target.getBoundingClientRect();
+    const header = document.querySelector('.site-header')!.getBoundingClientRect();
+    const dock = document.querySelector('.chapter-dock')!.getBoundingClientRect();
+    return bounds.height > 0 && bounds.top >= header.bottom && bounds.bottom <= dock.top
+      && bounds.left >= 0 && bounds.right <= innerWidth;
+  }), { message: 'The target must be fully visible between the fixed header and chapter dock.' }).toBe(true);
+}
+
+test('the owner is the hero and the original galaxy artwork loads without runtime errors', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('./');
@@ -18,11 +28,11 @@ test('the owner is the hero and the star-sea artwork loads without runtime error
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/PersonalWeb/favicon.svg');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/SHI-TONG\s*CHANG/);
   const landscape = page.locator('.hero-scene img.hero-landscape');
-  await expect(landscape).toHaveAttribute('src', '/PersonalWeb/assets/star-sea-v1.webp');
+  await expect(landscape).toHaveAttribute('src', '/PersonalWeb/assets/orbital-atlas-v1.svg');
   await expect.poll(() => landscape.evaluate(element => {
     const image = element as HTMLImageElement;
     return image.complete && image.naturalWidth > 0;
-  }), { message: 'The star-sea hero artwork must load successfully.' }).toBe(true);
+  }), { message: 'The original orbital-atlas hero artwork must load successfully.' }).toBe(true);
   await expect(page.locator('.chapter')).toHaveCount(4);
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
   await expect(page.locator('body')).toHaveClass(/is-paged/);
@@ -120,7 +130,7 @@ test('visibility and page lifecycle pauses settle an in-flight chapter instead o
   await expect(page).toHaveURL(/#skills$/);
   await expect(page.locator('#skills')).toBeFocused();
   await expect(page.locator('.scene-stars i').first()).toHaveCSS('animation-play-state', 'paused');
-  await page.locator('nav a[href="#about"]').click();
+  await page.locator('.top-nav a[href="#about"]').click();
   await expectChapterAtTop(page, 'about');
   await expect(page.locator('.scene-stars i').first()).toHaveCSS('animation-play-state', 'running');
 });
@@ -156,7 +166,7 @@ test('rapid chapter selection finishes at the latest destination without hiding 
   await page.goto('./');
   await page.evaluate(() => {
     for (const id of ['projects', 'skills', 'contact']) {
-      document.querySelector<HTMLAnchorElement>(`nav a[href="#${id}"]`)!.click();
+      document.querySelector<HTMLAnchorElement>(`.top-nav a[href="#${id}"]`)!.click();
     }
   });
   await expect(page.locator('#contact')).toBeFocused();
@@ -167,31 +177,114 @@ test('rapid chapter selection finishes at the latest destination without hiding 
   await expectChapterAtTop(page, 'contact');
 });
 
+test('the chapter rail, counter, progress and dock action track every chapter and cycle on request', async ({ page }) => {
+  await page.goto('./');
+  const ids = ['about', 'projects', 'skills', 'contact'];
+  const rail = page.locator('.chapter-rail');
+  const next = page.locator('.chapter-dock #next-chapter');
+  await expect(rail).toBeVisible();
+  await expect(rail.locator('a[data-chapter]')).toHaveCount(4);
+  await expect(page.locator('.chapter-dock')).toBeVisible();
+  for (const [index, id] of ids.entries()) {
+    await expectChapterAtTop(page, id);
+    await expect(rail.locator('[aria-current="location"]')).toHaveCount(1);
+    await expect(rail.locator(`[data-chapter="${index}"]`)).toHaveAttribute('aria-current', 'location');
+    await expect(page.locator('#current-chapter')).toHaveText(String(index + 1).padStart(2, '0'));
+    await expect.poll(() => page.locator('#progress-fill').evaluate(fill => (
+      fill.getBoundingClientRect().width / fill.parentElement!.getBoundingClientRect().width
+    ))).toBeCloseTo((index + 1) / 4, 2);
+    await expect(next).toHaveAttribute('href', `#${ids[(index + 1) % ids.length]}`);
+    await expect(page.locator('#next-label')).toHaveText(index === 3 ? '回到開場' : '下一章');
+    await expect(page.locator('#next-arrow')).toHaveText(index === 3 ? '↑' : '↓');
+    if (index < ids.length - 1) await next.click();
+  }
+  // The final chapter does not wrap from accidental trailing wheel input.
+  await page.waitForTimeout(250);
+  await page.mouse.move(700, 500);
+  await page.mouse.wheel(0, 180);
+  await page.waitForTimeout(850);
+  await expectChapterAtTop(page, 'contact');
+  await expect(page).toHaveURL(/#contact$/);
+  await next.click();
+  await expectChapterAtTop(page, 'about');
+  await expect(page.locator('#current-chapter')).toHaveText('01');
+  await rail.locator('[data-chapter="2"]').click();
+  await expectChapterAtTop(page, 'skills');
+  await expect(page.locator('#skills')).toBeFocused();
+  await expect(page.locator('#current-chapter')).toHaveText('03');
+});
+
+test('the mobile dock follows native reading without adding history or overwriting project deep links', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('./#about');
+  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
+  const dock = page.locator('.chapter-dock');
+  await expect(dock).toBeVisible();
+  const dockBounds = await dock.boundingBox();
+  expect(dockBounds).not.toBeNull();
+  expect(dockBounds!.y + dockBounds!.height).toBeCloseTo(844, 0);
+  expect(dockBounds!.x).toBeGreaterThanOrEqual(0);
+  expect(dockBounds!.x + dockBounds!.width).toBeLessThanOrEqual(390);
+  const navigation = page.getByRole('navigation', { name: '章節導覽' });
+  await navigation.getByRole('link', { name: '聯繫方式' }).click();
+  await expect(page.locator('#current-chapter')).toHaveText('04');
+  await expect(page.locator('#next-chapter')).toHaveAttribute('href', '#about');
+  await page.locator('#next-chapter').click();
+  await expect(page.locator('#current-chapter')).toHaveText('01');
+  await expect(page).toHaveURL(/#about$/);
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThanOrEqual(2);
+  const historyLength = await page.evaluate(() => history.length);
+  const toProjects = await page.locator('#projects').evaluate(section => section.getBoundingClientRect().top);
+  await page.mouse.move(190, 400);
+  await page.mouse.wheel(0, toProjects);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
+  await expect(page.locator('#current-chapter')).toHaveText('02');
+  await expect(page).toHaveURL(/#projects$/);
+  expect(await page.evaluate(() => history.length)).toBe(historyLength);
+
+  await page.goto('./#project-panel-project-02');
+  await expect(page.locator('#project-tab-project-02')).toHaveAttribute('aria-selected', 'true');
+  // Position the reader inside the linked article before exercising native wheel.
+  await page.locator('#project-panel-project-02').evaluate(panel => panel.scrollIntoView({ behavior: 'instant', block: 'start' }));
+  const deepLinkHistoryLength = await page.evaluate(() => history.length);
+  const toSkills = await page.locator('#skills').evaluate(section => section.getBoundingClientRect().top);
+  await page.mouse.wheel(0, toSkills);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'skills');
+  await expect(page.locator('#current-chapter')).toHaveText('03');
+  await page.waitForTimeout(250);
+  await expect(page).toHaveURL(/#project-panel-project-02$/);
+  expect(await page.evaluate(() => history.length)).toBe(deepLinkHistoryLength);
+});
+
 test('closed chapters fit common desktop viewports without clipping their content', async ({ page }) => {
   for (const viewport of [
     { width: 1440, height: 900 },
     { width: 1366, height: 768 },
     { width: 1280, height: 720 },
+    { width: 1024, height: 700 },
+    { width: 900, height: 700 },
   ]) {
     await page.setViewportSize(viewport);
     await page.goto('./');
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(page.locator('body')).toHaveClass(/is-paged/);
     for (const id of ['about', 'projects', 'skills', 'contact']) {
-      await page.locator(`nav a[href="#${id}"]`).click();
+      await page.locator(`.top-nav a[href="#${id}"]`).click();
       await expectChapterAtTop(page, id);
       const bounds = await page.locator(`#${id}`).evaluate(section => {
         const chapter = section.getBoundingClientRect();
         const content = section.querySelector(':scope > .section-inner')!.getBoundingClientRect();
         const header = document.querySelector('.site-header')!.getBoundingClientRect();
+        const dock = document.querySelector('.chapter-dock')!.getBoundingClientRect();
         return {
           height: chapter.height,
-          contentVisible: content.top >= header.bottom - 1 && content.bottom <= innerHeight + 1,
+          contentVisible: content.top >= header.bottom - 1 && content.bottom <= dock.top + 1,
           noOverflow: document.documentElement.scrollWidth <= innerWidth,
         };
       });
       expect(Math.abs(bounds.height - viewport.height), `${id} should occupy one ${viewport.height}px viewport.`).toBeLessThanOrEqual(2);
-      expect(bounds.contentVisible, `${id} content must fit below the header at ${viewport.width}×${viewport.height}.`).toBe(true);
+      expect(bounds.contentVisible, `${id} content must fit between header and dock at ${viewport.width}×${viewport.height}.`).toBe(true);
       expect(bounds.noOverflow).toBe(true);
     }
   }
@@ -256,12 +349,8 @@ for (const height of [900, 600]) {
       await expect(tab).toHaveAttribute('aria-selected', 'true');
       await expect(tab).toBeFocused();
       await expect(tab).toBeInViewport();
-      await expect.poll(() => tab.evaluate(element => {
-        const bounds = element.getBoundingClientRect();
-        const header = document.querySelector('.site-header')!.getBoundingClientRect();
-        return bounds.height > 0 && bounds.top >= header.bottom && bounds.bottom <= innerHeight
-          && bounds.left >= 0 && bounds.right <= innerWidth;
-      }), { message: `The focused ${id} tab must be fully visible below the header at 1440×${height}.` }).toBe(true);
+      await expectBetweenHeaderAndDock(tab);
+      if (height === 900) await expectBetweenHeaderAndDock(page.locator('.gallery-heading'));
       await expect(page.locator(`#project-panel-${id}`)).toHaveAttribute('aria-hidden', 'false');
       await expect(archive.getByRole('tabpanel')).toHaveCount(1);
       await archive.locator(':scope > summary').click();
@@ -320,6 +409,7 @@ test('featured navigation cancels a running chapter transition without losing vi
   await page.waitForTimeout(900);
   await expect(tab).toBeFocused();
   await expect(tab).toBeInViewport();
+  await expectBetweenHeaderAndDock(tab);
   await page.reload();
   await expect(page.locator('#project-archive')).toHaveAttribute('open');
   await expect(tab).toHaveAttribute('aria-selected', 'true');
@@ -359,7 +449,7 @@ test('a later chapter link wins over a featured card in the same frame', async (
   await expectChapterAtTop(page, 'projects');
   await page.evaluate(() => {
     document.querySelector<HTMLAnchorElement>('[data-project-open="project-02"]')!.click();
-    document.querySelector<HTMLAnchorElement>('nav a[href="#contact"]')!.click();
+    document.querySelector<HTMLAnchorElement>('.top-nav a[href="#contact"]')!.click();
   });
   await expectChapterAtTop(page, 'contact');
   await expect(page.locator('#contact')).toBeFocused();
@@ -389,13 +479,14 @@ test('long project copy remains reachable after the archive expands', async ({ p
     const bounds = element.getBoundingClientRect();
     const section = element.closest('.chapter')!.getBoundingClientRect();
     const header = document.querySelector('.site-header')!.getBoundingClientRect();
+    const dock = document.querySelector('.chapter-dock')!.getBoundingClientRect();
     return bounds.height > 0
       && bounds.top >= Math.max(header.bottom, section.top)
-      && bounds.bottom <= Math.min(innerHeight, section.bottom)
+      && bounds.bottom <= Math.min(dock.top, section.bottom)
       && bounds.left >= Math.max(0, section.left)
       && bounds.right <= Math.min(innerWidth, section.right);
-  }), { message: 'The final line must be fully visible inside its section below the fixed header.' }).toBe(true);
-  await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
+  }), { message: 'The final line must be fully visible inside its section between the header and dock.' }).toBe(true);
+  await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).click();
   await expectChapterAtTop(page, 'contact');
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
 });
@@ -441,7 +532,7 @@ test('large touch screens retain native scrolling and accessible navigation', as
   try {
     await page.goto(siteURL);
     await expect(page.locator('body')).not.toHaveClass(/is-paged/);
-    await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).tap();
+    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).tap();
     await expect(page.locator('#contact')).toBeInViewport();
     await expect(page.locator('#contact')).toBeFocused();
     await expect(page.locator('.chapter[inert]')).toHaveCount(0);
@@ -467,12 +558,48 @@ test('reduced motion disables hero animation and parallax without changing acces
   await expect(page.locator('#about')).toHaveCSS('--scene-shift', '0px');
   await expect(page.locator('#about')).toHaveCSS('--scene-scale', '1');
   await expect(page.locator('#about')).toHaveCSS('--scene-opacity', '1');
-  await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
+  await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).click();
   await expect(page.locator('#contact')).toBeInViewport();
   await page.setViewportSize({ width: 1440, height: 600 });
   await expect(page.locator('body')).not.toHaveClass(/is-paged/);
-  await page.getByRole('navigation').getByRole('link', { name: /個人介紹/ }).click();
+  await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /個人介紹/ }).click();
   await expect(page.locator('#about')).toBeInViewport();
+});
+
+test('optional email copy reports success and preserves a usable fallback when clipboard access fails', async ({ page }) => {
+  const email = 'hello@example.test';
+  // Inject the optional data-driven controls in the HTML response, before the
+  // normal module bootstrap binds listeners. No real profile data is changed.
+  await page.route('**/PersonalWeb/', async route => {
+    const response = await route.fetch();
+    const html = await response.text();
+    const marker = '<div class="contact-actions">';
+    expect(html).toContain(marker);
+    const controls = `<div class="email-actions"><a href="mailto:${email}">${email}</a><button type="button" id="copy-email" data-email="${email}">複製 Email</button><span id="copy-status" role="status"></span></div>`;
+    await route.fulfill({ response, body: html.replace(marker, marker + controls) });
+  });
+  await page.addInitScript(() => {
+    const state = { copied: '', reject: false };
+    Object.defineProperty(window, '__clipboardTest', { value: state });
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: async (value: string) => {
+        if (state.reject) throw new Error('Clipboard access denied for this test');
+        state.copied = value;
+      } },
+    });
+  });
+  await page.goto('./#contact');
+  const button = page.locator('#copy-email');
+  const status = page.locator('#copy-status');
+  await button.click();
+  await expect(status).toHaveText('Email 已複製');
+  expect(await page.evaluate(() => (window as unknown as { __clipboardTest: { copied: string } }).__clipboardTest.copied)).toBe(email);
+  await page.evaluate(() => { (window as unknown as { __clipboardTest: { reject: boolean } }).__clipboardTest.reject = true; });
+  await button.click();
+  await expect(status).toHaveText('無法自動複製，請選取上方 Email 複製。');
+  await expect(page.getByRole('link', { name: email, exact: true })).toHaveAttribute('href', `mailto:${email}`);
+  await expect(page.getByRole('link', { name: email, exact: true })).toBeVisible();
 });
 
 test('without JavaScript or web fonts native chapter navigation and details remain usable', async ({ browser }) => {
@@ -483,7 +610,7 @@ test('without JavaScript or web fonts native chapter navigation and details rema
     await page.goto(siteURL);
     await expect(page.locator('.chapter')).toHaveCount(4);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/SHI-TONG\s*CHANG/);
-    await page.getByRole('navigation').getByRole('link', { name: /專案經歷/ }).click();
+    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /專案經歷/ }).click();
     // Wait for native smooth fragment scrolling before a no-JS actionability check.
     await expect.poll(() => page.locator('#projects').evaluate(element => Math.abs(
       element.getBoundingClientRect().top - parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop),
@@ -514,7 +641,7 @@ test('without JavaScript or web fonts native chapter navigation and details rema
     await expect(archive).toHaveAttribute('open');
     await expect(archive.locator('[data-project-panel]')).toHaveCount(10);
     await expect(archive.locator('[data-project-panel][inert]')).toHaveCount(0);
-    await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
+    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).click();
     await expect(page.locator('#contact')).toBeInViewport();
   } finally {
     await context.close();
