@@ -1,6 +1,7 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 
 const siteURL = 'http://127.0.0.1:4321/PersonalWeb/';
+const chapterIds = ['about', 'projects', 'skills', 'timeline', 'contact'];
 
 async function expectChapterAtTop(page: Page, id: string) {
   // Let the same late-font alignment used by the page settle before measuring.
@@ -56,7 +57,7 @@ test('the owner is the hero and the original galaxy artwork loads without runtim
     const image = element as HTMLImageElement;
     return image.complete && image.naturalWidth > 0;
   }), { message: 'The original orbital-atlas hero artwork must load successfully.' }).toBe(true);
-  await expect(page.locator('.chapter')).toHaveCount(4);
+  await expect(page.locator('.chapter')).toHaveCount(5);
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
   await expect(page.locator('body')).toHaveClass(/is-paged/);
   expect(errors).toEqual([]);
@@ -161,11 +162,12 @@ test('visibility and page lifecycle pauses settle an in-flight chapter instead o
 test('chapter navigation, accessible focus, deep links and reload work', async ({ page }) => {
   await page.goto('./');
   const navigation = page.getByRole('navigation', { name: '章節導覽' });
-  await expect(navigation.getByRole('link')).toHaveCount(4);
+  await expect(navigation.getByRole('link')).toHaveCount(5);
   for (const [id, label] of [
     ['about', '個人介紹'],
     ['projects', '專案經歷'],
     ['skills', '擅長技能'],
+    ['timeline', '大事記'],
     ['contact', '聯繫方式'],
   ]) {
     const link = navigation.getByRole('link', { name: label });
@@ -234,7 +236,7 @@ test('a same-document chapter hash stays aligned after mobile-to-desktop layout 
 test('rapid chapter selection finishes at the latest destination without hiding other sections', async ({ page }) => {
   await page.goto('./');
   await page.evaluate(() => {
-    for (const id of ['projects', 'skills', 'contact']) {
+    for (const id of ['projects', 'skills', 'timeline', 'contact']) {
       document.querySelector<HTMLAnchorElement>(`.top-nav a[href="#${id}"]`)!.click();
     }
   });
@@ -248,11 +250,11 @@ test('rapid chapter selection finishes at the latest destination without hiding 
 
 test('the chapter rail, counter, progress and dock action track every chapter and cycle on request', async ({ page }) => {
   await page.goto('./');
-  const ids = ['about', 'projects', 'skills', 'contact'];
+  const ids = chapterIds;
   const rail = page.locator('.chapter-rail');
   const next = page.locator('.chapter-dock #next-chapter');
   await expect(rail).toBeVisible();
-  await expect(rail.locator('a[data-chapter]')).toHaveCount(4);
+  await expect(rail.locator('a[data-chapter]')).toHaveCount(5);
   await expect(page.locator('.chapter-dock')).toBeVisible();
   for (const [index, id] of ids.entries()) {
     await expectChapterAtTop(page, id);
@@ -261,10 +263,10 @@ test('the chapter rail, counter, progress and dock action track every chapter an
     await expect(page.locator('#current-chapter')).toHaveText(String(index + 1).padStart(2, '0'));
     await expect.poll(() => page.locator('#progress-fill').evaluate(fill => (
       fill.getBoundingClientRect().width / fill.parentElement!.getBoundingClientRect().width
-    ))).toBeCloseTo((index + 1) / 4, 2);
+    ))).toBeCloseTo((index + 1) / ids.length, 2);
     await expect(next).toHaveAttribute('href', `#${ids[(index + 1) % ids.length]}`);
-    await expect(page.locator('#next-label')).toHaveText(index === 3 ? '回到開場' : '下一章');
-    await expect(page.locator('#next-arrow')).toHaveText(index === 3 ? '↑' : '↓');
+    await expect(page.locator('#next-label')).toHaveText(index === ids.length - 1 ? '回到開場' : '下一章');
+    await expect(page.locator('#next-arrow')).toHaveText(index === ids.length - 1 ? '↑' : '↓');
     if (index < ids.length - 1) await next.click();
   }
   // The final chapter does not wrap from accidental trailing wheel input.
@@ -296,7 +298,7 @@ test('the mobile dock follows native reading without adding history or overwriti
   expect(dockBounds!.x + dockBounds!.width).toBeLessThanOrEqual(390);
   const navigation = page.getByRole('navigation', { name: '章節導覽' });
   await navigation.getByRole('link', { name: '聯繫方式' }).click();
-  await expect(page.locator('#current-chapter')).toHaveText('04');
+  await expect(page.locator('#current-chapter')).toHaveText('05');
   await expect(page.locator('#next-chapter')).toHaveAttribute('href', '#about');
   // Observe completion before clicking: scrollY <= 2 can still be the last
   // frames of a native smooth scroll and is not yet a fresh-wheel boundary.
@@ -343,7 +345,7 @@ test('the mobile dock follows native reading without adding history or overwriti
   expect(await page.evaluate(() => history.length)).toBe(deepLinkHistoryLength);
 });
 
-test('all four chapters and the complete project stage fit common desktop viewports without clipping', async ({ page }) => {
+test('all five chapters and the complete project stage fit common desktop viewports without clipping', async ({ page }) => {
   for (const viewport of [
     { width: 1440, height: 900 },
     { width: 1366, height: 768 },
@@ -355,7 +357,7 @@ test('all four chapters and the complete project stage fit common desktop viewpo
     await page.goto('./');
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(page.locator('body')).toHaveClass(/is-paged/);
-    for (const id of ['about', 'projects', 'skills', 'contact']) {
+    for (const id of chapterIds) {
       await page.locator(`.top-nav a[href="#${id}"]`).click();
       await expectChapterAtTop(page, id);
       const bounds = await page.locator(`#${id}`).evaluate(section => {
@@ -632,7 +634,7 @@ test('all sections and the direct project gallery fit phone, narrow tablet and d
     { width: 1440, height: 900 },
   ]) {
     await page.setViewportSize(viewport);
-    for (const id of ['about', 'projects', 'skills', 'contact']) {
+    for (const id of chapterIds) {
       await page.locator(`#${id}`).scrollIntoViewIfNeeded();
       await expect(page.locator(`#${id}`)).toBeInViewport();
     }
@@ -737,7 +739,7 @@ test('without JavaScript or web fonts native navigation and the full project gal
   const page = await context.newPage();
   try {
     await page.goto(siteURL);
-    await expect(page.locator('.chapter')).toHaveCount(4);
+    await expect(page.locator('.chapter')).toHaveCount(5);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/SHI-TONG\s*CHANG/);
     await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /專案經歷/ }).click();
     // Wait for native smooth fragment scrolling before a no-JS actionability check.

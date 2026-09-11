@@ -1,0 +1,71 @@
+/* Content stays naturally visible. WAAPI owns only each brief entrance; no
+   reveal selector sets opacity:0, display:none, or a permanent will-change. */
+
+.chapter-sky > ellipse {
+  animation: celestial-haze 12s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+.chapter-sky > g:last-child {
+  animation: celestial-lines 16s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+.hero-portrait .portrait-orbit {
+  transform-origin: center;
+  animation: portrait-orbit-drift 24s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+.thought-orbit svg {
+  transform-origin: 47% 50%;
+  animation: thought-orbit-drift 20s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+.signal-chart {
+  transform-origin: 50% 49.5%;
+  animation: signal-breath 14s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+.timeline-orbit svg {
+  animation: celestial-haze 14s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+
+.chapter[data-motion-active='true'] :is(
+  .chapter-sky > ellipse,
+  .chapter-sky > g:last-child,
+  .hero-portrait .portrait-orbit,
+  .thought-orbit svg,
+  .timeline-orbit svg,
+  .signal-chart
+) { animation-play-state: running; }
+
+@keyframes celestial-haze {
+  from { opacity: .62; }
+  to { opacity: 1; }
+}
+@keyframes celestial-lines {
+  from { opacity: .12; }
+  to { opacity: .21; }
+}
+@keyframes portrait-orbit-drift {
+  from { rotate: -3deg; opacity: .56; }
+  to { rotate: 3deg; opacity: .84; }
+}
+@keyframes thought-orbit-drift {
+  from { rotate: -2deg; }
+  to { rotate: 2deg; }
+}
+@keyframes signal-breath {
+  from { scale: .985; opacity: .78; }
+  to { scale: 1; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter :is(
+    .chapter-sky > ellipse,
+    .chapter-sky > g:last-child,
+    .hero-portrait .portrait-orbit,
+    .thought-orbit svg,
+    .timeline-orbit svg,
+    .signal-chart
+  ) { animation: none !important; }
+}

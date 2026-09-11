@@ -1,0 +1,37 @@
+---
+import { profile } from '../data/profile';
+import '../styles/portrait.css';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const portrait = profile.portrait;
+const source = portrait.src.trim();
+const asset = (path: string) => /^(https?:\/\/|data:)/i.test(path) ? path : `${base}/${path.replace(/^\/+/, '')}`;
+---
+
+<figure class="hero-portrait" data-portrait data-portrait-state={source ? 'loading' : 'empty'} data-reveal>
+  <div class="portrait-frame">
+    <div class="portrait-frame-label" aria-hidden="true"><span>THE PERSON BEHIND THE IDEAS</span><span>01 / STC</span></div>
+    <div class="portrait-window">
+      <div class="portrait-placeholder" role="img" aria-label="個人照片預留區" aria-hidden={source ? 'true' : undefined}>
+        <svg class="portrait-orbit" viewBox="0 0 320 400" aria-hidden="true" focusable="false">
+          <g fill="none" stroke="currentColor" stroke-width=".7">
+            <ellipse cx="160" cy="190" rx="120" ry="149" transform="rotate(25 160 190)" />
+            <ellipse cx="160" cy="190" rx="120" ry="149" transform="rotate(-25 160 190)" stroke-dasharray="1 8" />
+            <circle cx="160" cy="190" r="93" opacity=".35" />
+          </g>
+          <g fill="currentColor"><circle cx="88" cy="61" r="2.5"/><circle cx="282" cy="198" r="2"/><path d="m52 255 3 9 9 3-9 3-3 9-3-9-9-3 9-3Z" /></g>
+        </svg>
+        <div class="portrait-placeholder-copy" aria-hidden="true">
+          <svg class="portrait-outline" viewBox="0 0 100 120" fill="none"><circle cx="50" cy="33" r="20"/><path d="M14 103v-9a36 36 0 0 1 72 0v9M27 111h46"/></svg>
+          <span>YOUR PORTRAIT</span>
+          <p>個人照片預留位置</p>
+        </div>
+      </div>
+      {source && <img data-portrait-image src={asset(source)} alt={portrait.alt} width="640" height="800" decoding="async" style={{ 'object-position': portrait.position }} />}
+      <span class="portrait-corner corner-top" aria-hidden="true"></span><span class="portrait-corner corner-bottom" aria-hidden="true"></span>
+    </div>
+  </div>
+  <figcaption><span>PORTRAIT / 01</span><span>讓故事，有一個真實的模樣。<i aria-hidden="true">✧</i></span></figcaption>
+</figure>
+
+<script src="../scripts/portraits.ts"></script>

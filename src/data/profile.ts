@@ -6,6 +6,9 @@ export const profile = {
   title: '讓想像有形，讓作品有溫度。',
   introduction: '你好，我是 Shi-Tong。喜歡探索不同領域，也喜歡把腦海裡的風景，一步步做成能被看見、被使用的作品。',
   biography: '',
+  // Put the file in public/assets, then set src to e.g. '/assets/portrait.webp'.
+  // Empty src keeps the photo reservation. Position adjusts the crop.
+  portrait: { src: '', alt: 'Shi-Tong 的個人照片', position: 'center' },
   github: 'https://github.com/shi-tong-chang',
   email: '',
 };
@@ -14,7 +17,8 @@ export const chapters = [
   { id: 'about', label: '個人介紹', number: '01' },
   { id: 'projects', label: '專案經歷', number: '02' },
   { id: 'skills', label: '擅長技能', number: '03' },
-  { id: 'contact', label: '聯繫方式', number: '04' },
+  { id: 'timeline', label: '大事記', number: '04' },
+  { id: 'contact', label: '聯繫方式', number: '05' },
 ] as const;
 
 export const copy = {
@@ -39,7 +43,7 @@ export const copy = {
     note: '這裡先放探索方向，具體技能與經歷會隨作品逐步補上。',
   },
   contact: {
-    eyebrow: '04 / THE NEXT CHAPTER',
+    eyebrow: '05 / THE NEXT CHAPTER',
     heading: ['下一個故事', '從一次對話開始。'],
     introduction: '聊一個想法、交換一點靈感，或只是打聲招呼。期待在這片星海，與你相遇。',
     action: '到 GitHub 找我',
