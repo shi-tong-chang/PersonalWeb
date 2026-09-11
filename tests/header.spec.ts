@@ -25,6 +25,40 @@ async function expectGitHubLink(link: Locator) {
   await expect(icon).toHaveAttribute('focusable', 'false');
 }
 
+async function expectCenteredNavigation(header: Locator) {
+  const layout = await header.evaluate(element => {
+    const header = element.getBoundingClientRect();
+    const navigation = element.querySelector('.top-nav')!.getBoundingClientRect();
+    const actions = element.querySelector('.header-actions')!.getBoundingClientRect();
+    const brand = element.querySelector('.brand')!;
+    const brandText: DOMRect[] = [];
+    const textNodes = document.createTreeWalker(brand, NodeFilter.SHOW_TEXT);
+    for (let node = textNodes.nextNode(); node; node = textNodes.nextNode()) {
+      if (!node.textContent?.trim() || getComputedStyle(node.parentElement!).visibility === 'hidden') continue;
+      // A text range reveals glyphs overflowing a shrunken anchor/wordmark box;
+      // anchor rectangles alone could report a false non-overlap at 900px.
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      brandText.push(...Array.from(range.getClientRects()).filter(rect => rect.width > 0 && rect.height > 0));
+    }
+    const overlaps = (first: DOMRect, second: DOMRect) => (
+      Math.min(first.right, second.right) - Math.max(first.left, second.left) > 1
+      && Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top) > 1
+    );
+    return {
+      centerDelta: Math.abs(navigation.left + navigation.width / 2 - innerWidth / 2),
+      brandTextCount: brandText.length,
+      brandTextInside: brandText.every(rect => rect.left >= header.left - 1 && rect.right <= header.right + 1
+        && rect.top >= header.top - 1 && rect.bottom <= header.bottom + 1),
+      brandTextOverlap: brandText.some(rect => overlaps(rect, navigation) || overlaps(rect, actions)),
+    };
+  });
+  expect(layout.centerDelta, 'The navigation must be centered on the viewport, not between unequal side contents.').toBeLessThanOrEqual(1);
+  expect(layout.brandTextCount).toBeGreaterThan(0);
+  expect(layout.brandTextInside, 'The visible identity text must remain inside the fixed header.').toBe(true);
+  expect(layout.brandTextOverlap, 'Identity glyphs must not overflow into navigation or action controls.').toBe(false);
+}
+
 test('five distinct chapter glyphs preserve named links, keyboard access and synchronized active state', async ({ page }) => {
   await page.goto('./');
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
@@ -72,10 +106,14 @@ test('five distinct chapter glyphs preserve named links, keyboard access and syn
 
 test('the chapter header and upper-right GitHub icon fit desktop and narrow mobile layouts', async ({ page }) => {
   for (const viewport of [
+    { width: 1920, height: 1080 },
     { width: 1440, height: 900 },
     { width: 1366, height: 768 },
+    { width: 1351, height: 900 },
+    { width: 1350, height: 900 },
     { width: 1101, height: 800 },
     { width: 1100, height: 800 },
+    { width: 1024, height: 768 },
     { width: 900, height: 700 },
     { width: 899, height: 700 },
     { width: 768, height: 1024 },
@@ -115,6 +153,7 @@ test('the chapter header and upper-right GitHub icon fit desktop and narrow mobi
       expect(layout.height).toBeCloseTo(viewport.width <= 899 ? 100 : 88, 0);
       expect(layout.allLinksInside, 'All visible header links must fit within its reserved height and width.').toBe(true);
       expect(layout.overlap, 'Navigation, identity and GitHub controls must not overlap.').toBe(false);
+      await expectCenteredNavigation(header);
       expect(layout.overflow).toBe(false);
       expect(layout.githubRight).toBeGreaterThan(viewport.width * .75);
       expect(layout.githubTop).toBeLessThan(layout.height / 2);
@@ -131,6 +170,7 @@ test('the chapter header and upper-right GitHub icon fit desktop and narrow mobi
 test('chapter links and GitHub remain usable with reduced motion and without JavaScript or web fonts', async ({ browser }) => {
   for (const mode of [
     { name: 'reduced motion', javaScriptEnabled: true, viewport: { width: 1440, height: 900 } },
+    { name: '900px desktop with fallback fonts', javaScriptEnabled: true, viewport: { width: 900, height: 700 } },
     { name: 'no JavaScript', javaScriptEnabled: false, viewport: { width: 390, height: 844 } },
   ]) {
     const context = await browser.newContext({ javaScriptEnabled: mode.javaScriptEnabled, viewport: mode.viewport, reducedMotion: 'reduce' });
@@ -139,8 +179,10 @@ test('chapter links and GitHub remain usable with reduced motion and without Jav
     try {
       await test.step(mode.name, async () => {
         await page.goto(siteURL);
+        await page.evaluate(() => document.fonts.ready.then(() => undefined));
         const navigation = page.getByRole('navigation', { name: '章節導覽' });
         await expectGitHubLink(page.locator('.site-header .header-github'));
+        await expectCenteredNavigation(page.locator('.site-header'));
         for (const [id, label] of chapterLinks) {
           const link = navigation.getByRole('link', { name: label, exact: true });
           await link.focus();
