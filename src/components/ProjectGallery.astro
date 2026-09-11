@@ -10,8 +10,8 @@ const number = (index: number) => String(index + 1).padStart(2, '0');
 
 <div class="project-gallery" data-project-gallery role="region" aria-labelledby="projects-heading">
   {entries.length ? <>
-    <div class="project-library">
-      <div class="library-caption"><span>瀏覽作品<i aria-hidden="true"></i><span data-project-current>01</span><span class="library-total"> / {number(entries.length - 1)}</span></span><span class="library-hint">點選切換<span class="hover-hint"> · 懸停兩側，繼續探索</span><span class="touch-hint"> · 左右滑動</span></span></div>
+    <div class="project-library" data-reveal="fade" data-reveal-delay="140">
+      <div class="library-caption"><span>瀏覽作品<i aria-hidden="true"></i><span data-project-current>01</span><span class="library-total"> / {number(entries.length - 1)}</span></span></div>
       <div class="project-rail">
         <button type="button" class="project-edge edge-left" data-project-scroll="-1" aria-label="向左瀏覽專案" hidden><span aria-hidden="true">←</span></button>
         <div class="project-track" data-project-track aria-label="專案選擇">
@@ -31,7 +31,7 @@ const number = (index: number) => String(index + 1).padStart(2, '0');
     <div class="project-stage">
       {entries.map((project, index) => <article class="project-panel" id={'project-panel-' + project.id} data-project-panel data-project-title={project.name} aria-labelledby={'project-title-' + project.id}>
         <div class="project-panel-motion">
-          <div class="project-story">
+          <div class="project-story" data-reveal="left" data-reveal-delay="80">
             <div class="project-kicker"><span class="project-edition">PROJECT / {number(index)}</span><span class:list={['project-state', { 'is-reserved': project.status === 'reserved' }]}>{project.status === 'reserved' ? '預留席位' : '已收錄'}</span><p class="project-category">{project.category}{project.year && ' / ' + project.year}</p></div>
             <h3 id={'project-title-' + project.id} class="project-name">{project.name}</h3>
             <p class="project-poem">{project.subtitle}</p>
@@ -40,7 +40,7 @@ const number = (index: number) => String(index + 1).padStart(2, '0');
             {project.tags.length > 0 && <ul class="tags" aria-label={project.name + ' 專案技術'}>{project.tags.map(tag => <li>{tag}</li>)}</ul>}
             <div class="project-actions">{project.status === 'published' ? project.links.map(link => <a class="text-link" href={link.href.startsWith('/') ? asset(link.href) : link.href} target="_blank" rel="noopener noreferrer">{link.label}<span aria-hidden="true">↗</span><span class="sr-only">（另開分頁）</span></a>) : <span class="project-waiting"><i aria-hidden="true"></i>未來作品，敬請期待。</span>}</div>
           </div>
-          <div class:list={['project-visual', { 'is-reserved': project.status === 'reserved' }]}>
+          <div class:list={['project-visual', { 'is-reserved': project.status === 'reserved' }]} data-reveal="right" data-reveal-delay="80">
             <div class="project-frame">
               <div class="frame-bar" aria-hidden="true"><span class="frame-reticle">＋<i></i></span><span>{project.status === 'reserved' ? 'UNMAPPED POSSIBILITY' : 'A PERSONAL UNIVERSE'}</span><span>FIELD / {number(index)}</span></div>
               <div class="project-canvas">

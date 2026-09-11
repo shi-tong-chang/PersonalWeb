@@ -9,7 +9,7 @@ import '../styles/motion.css';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const canonical = new URL(`${base}/`, Astro.site).href;
-const landscape = `${base}/assets/orbital-atlas-v1.svg`;
+const landscape = `${base}/assets/milky-way-v1.webp`;
 ---
 <!doctype html>
 <html lang="zh-Hant">
@@ -43,7 +43,7 @@ const landscape = `${base}/assets/orbital-atlas-v1.svg`;
 
     <main id="main-content" aria-label="個人介紹、作品與探索">
       <section class="chapter about" id="about" aria-labelledby="about-heading" tabindex="-1">
-        <div class="hero-scene" aria-hidden="true"><img class="hero-landscape" src={landscape} alt="" width="1600" height="1000" fetchpriority="high" decoding="async" /><div class="scene-stars"><i></i><i></i><i></i></div></div>
+        <div class="hero-scene" aria-hidden="true"><img class="hero-landscape" src={landscape} alt="" width="1672" height="941" fetchpriority="high" decoding="async" /><div class="hero-stardust"></div><div class="scene-stars"><i></i><i></i><i></i></div></div>
         <div class="hero-shade" aria-hidden="true"></div>
         <div class="section-inner about-layout">
           <div class="hero-copy">
@@ -62,8 +62,8 @@ const landscape = `${base}/assets/orbital-atlas-v1.svg`;
       <section class="chapter projects" id="projects" aria-labelledby="projects-heading" tabindex="-1">
         <StarField chart="projects" />
         <div class="section-inner projects-inner">
-          <div class="section-heading work-heading" data-reveal><div><p class="eyebrow">{copy.projects.eyebrow}</p><h2 id="projects-heading">{copy.projects.heading[0]}，<br class="mobile-break" />{copy.projects.heading[1]}</h2></div><p class="section-subtitle">{copy.projects.subtitle}</p></div>
-          <div class="project-atlas" id="project-archive" data-reveal="fade">
+          <div class="section-heading work-heading" data-reveal="left"><div><p class="eyebrow">{copy.projects.eyebrow}</p><h2 id="projects-heading">{copy.projects.heading[0]}，<br class="mobile-break" />{copy.projects.heading[1]}</h2></div></div>
+          <div class="project-atlas" id="project-archive">
             <ProjectGallery />
           </div>
           <p class="work-footnote">{copy.projects.footer}</p>

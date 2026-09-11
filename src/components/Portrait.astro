@@ -6,32 +6,52 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const portrait = profile.portrait;
 const source = portrait.src.trim();
 const asset = (path: string) => /^(https?:\/\/|data:)/i.test(path) ? path : `${base}/${path.replace(/^\/+/, '')}`;
+const mask = 'mask' in portrait && typeof portrait.mask === 'string' ? portrait.mask.trim() : '';
+const photoStyle = {
+  'object-position': portrait.position,
+  ...(mask ? { 'mask-image': `url("${asset(mask)}")`, 'mask-mode': 'luminance', 'mask-size': '100% 100%', 'mask-repeat': 'no-repeat' } : {}),
+};
 ---
 
 <figure class="hero-portrait" data-portrait data-portrait-state={source ? 'loading' : 'empty'} data-reveal>
   <div class="portrait-frame">
-    <div class="portrait-frame-label" aria-hidden="true"><span>THE PERSON BEHIND THE IDEAS</span><span>01 / STC</span></div>
-    <div class="portrait-window">
-      <div class="portrait-placeholder" role="img" aria-label="個人照片預留區" aria-hidden={source ? 'true' : undefined}>
-        <svg class="portrait-orbit" viewBox="0 0 320 400" aria-hidden="true" focusable="false">
-          <g fill="none" stroke="currentColor" stroke-width=".7">
-            <ellipse cx="160" cy="190" rx="120" ry="149" transform="rotate(25 160 190)" />
-            <ellipse cx="160" cy="190" rx="120" ry="149" transform="rotate(-25 160 190)" stroke-dasharray="1 8" />
-            <circle cx="160" cy="190" r="93" opacity=".35" />
-          </g>
-          <g fill="currentColor"><circle cx="88" cy="61" r="2.5"/><circle cx="282" cy="198" r="2"/><path d="m52 255 3 9 9 3-9 3-3 9-3-9-9-3 9-3Z" /></g>
-        </svg>
-        <div class="portrait-placeholder-copy" aria-hidden="true">
-          <svg class="portrait-outline" viewBox="0 0 100 120" fill="none"><circle cx="50" cy="33" r="20"/><path d="M14 103v-9a36 36 0 0 1 72 0v9M27 111h46"/></svg>
-          <span>YOUR PORTRAIT</span>
-          <p>個人照片預留位置</p>
+    <div class="portrait-sphere" data-crystal-motion="float">
+      <div class="portrait-halo" aria-hidden="true"></div>
+      <div class="portrait-window">
+        <div class="portrait-abyss" aria-hidden="true"></div>
+        <div class="portrait-mist portrait-mist-back" data-crystal-motion="mist" aria-hidden="true"></div>
+        <div class="portrait-mist portrait-mist-side" data-crystal-motion="mist" aria-hidden="true"></div>
+        <div class="portrait-depth-stars" aria-hidden="true"></div>
+        <div class="portrait-placeholder" role="img" aria-label="個人照片預留區" aria-hidden={source ? 'true' : undefined}>
+          <div class="portrait-placeholder-copy" aria-hidden="true">
+            <svg class="portrait-outline" viewBox="0 0 100 120" fill="none"><circle cx="50" cy="33" r="20"/><path d="M14 103v-9a36 36 0 0 1 72 0v9M27 111h46"/></svg>
+            <span>YOUR PORTRAIT</span>
+            <p>個人照片預留位置</p>
+          </div>
         </div>
+        {source && <img data-portrait-image src={asset(source)} alt={portrait.alt} width="1024" height="1536" loading="eager" decoding="async" fetchpriority="high" style={photoStyle} />}
+        <div class="portrait-mist portrait-mist-front" data-crystal-motion="veil" aria-hidden="true"></div>
+        <div class="portrait-reflection" aria-hidden="true"></div>
+        <svg class="portrait-glass-arcs" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="portrait-glass-light" x1="0" y1="0" x2="1" y2="1">
+              <stop stop-color="#eaf5ff" stop-opacity=".03"/>
+              <stop offset=".38" stop-color="#eaf5ff" stop-opacity=".9"/>
+              <stop offset=".76" stop-color="#c9b9ef" stop-opacity=".25"/>
+              <stop offset="1" stop-color="#eaf5ff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g fill="none" stroke="url(#portrait-glass-light)" stroke-linecap="round">
+            <path d="M28 179C34 93 96 32 174 24" stroke-width="2.5"/>
+            <path d="M35 157C48 93 95 49 140 38" stroke-width=".7" opacity=".55"/>
+            <path d="M248 376C312 357 361 307 375 241" stroke-width="1.5" opacity=".65"/>
+          </g>
+        </svg>
       </div>
-      {source && <img data-portrait-image src={asset(source)} alt={portrait.alt} width="640" height="800" decoding="async" style={{ 'object-position': portrait.position }} />}
-      <span class="portrait-corner corner-top" aria-hidden="true"></span><span class="portrait-corner corner-bottom" aria-hidden="true"></span>
+      <div class="portrait-rim" data-crystal-motion="refraction" aria-hidden="true"></div>
+      <div class="portrait-glint" data-crystal-motion="glint" aria-hidden="true"></div>
     </div>
   </div>
-  <figcaption><span>PORTRAIT / 01</span><span>讓故事，有一個真實的模樣。<i aria-hidden="true">✧</i></span></figcaption>
 </figure>
 
 <script src="../scripts/portraits.ts"></script>

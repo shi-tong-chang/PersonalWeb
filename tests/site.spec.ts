@@ -44,7 +44,7 @@ async function observeStartupScrollSettled(page: Page) {
   }));
 }
 
-test('the owner is the hero and the original galaxy artwork loads without runtime errors', async ({ page }) => {
+test('the owner is the hero and the Milky Way artwork loads without runtime errors', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('./');
@@ -52,11 +52,15 @@ test('the owner is the hero and the original galaxy artwork loads without runtim
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/PersonalWeb/favicon.svg');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/SHI-TONG\s*CHANG/);
   const landscape = page.locator('.hero-scene img.hero-landscape');
-  await expect(landscape).toHaveAttribute('src', '/PersonalWeb/assets/orbital-atlas-v1.svg');
+  await expect(landscape).toHaveAttribute('src', '/PersonalWeb/assets/milky-way-v1.webp');
   await expect.poll(() => landscape.evaluate(element => {
     const image = element as HTMLImageElement;
     return image.complete && image.naturalWidth > 0;
-  }), { message: 'The original orbital-atlas hero artwork must load successfully.' }).toBe(true);
+  }), { message: 'The Milky Way hero artwork must load successfully.' }).toBe(true);
+  const background = await page.request.get('/PersonalWeb/assets/milky-way-v1.webp');
+  expect(background.ok()).toBe(true);
+  expect(background.headers()['content-type']).toMatch(/^image\/webp/);
+  expect((await background.body()).subarray(0, 4).toString()).toBe('RIFF');
   await expect(page.locator('.chapter')).toHaveCount(5);
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
   await expect(page.locator('body')).toHaveClass(/is-paged/);
@@ -453,7 +457,13 @@ for (const height of [900, 600]) {
     const gallery = page.locator('[data-project-gallery]');
     const track = page.locator('[data-project-track]');
     if (height === 900) await expectChapterAtTop(page, 'projects');
-    if (height === 600) await track.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    if (height === 600) {
+      // Native fragment scrolling may still be finishing after load/fonts.ready.
+      // Set up a fresh keyboard interaction only once that navigation settles.
+      await observeStartupScrollSettled(page);
+      await track.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+      await expectBetweenHeaderAndDock(gallery.getByRole('tab').first());
+    }
     // Establish focus without starting the browser's separate smooth focus
     // scroll, so the assertion below measures only project selection behavior.
     await gallery.getByRole('tab').first().evaluate(element => (element as HTMLElement).focus({ preventScroll: true }));

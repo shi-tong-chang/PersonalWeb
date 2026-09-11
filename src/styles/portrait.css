@@ -1,31 +1,41 @@
-/* The reserved portrait has its final dimensions before an image is supplied. */
-.hero-portrait { width: 100%; max-width: 350px; min-width: 0; justify-self: end; }
-.portrait-frame { padding: 10px; border: 1px solid #d9c09340; border-radius: 3px; background: #0c1422b8; box-shadow: 0 24px 80px #0106124d; }
-.portrait-frame-label { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0 11px; font-size: 6px; letter-spacing: .12em; color: var(--accent); }
-.portrait-window { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: #0d1426; border: 1px solid #c6b0dc26; }
-.portrait-placeholder { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 35%, #61537e36, #11192c 64%); }
-.hero-portrait[data-portrait-state='ready'] .portrait-placeholder { visibility: hidden; }
-.portrait-orbit { position: absolute; width: 100%; height: 100%; inset: 0; color: #c6b0dd55; }
-.portrait-placeholder-copy { position: relative; z-index: 1; text-align: center; color: #c7bedb; }
-.portrait-outline { width: 74px; height: 90px; margin: 0 auto 25px; stroke: #d4c0a1; stroke-width: .8; }
+/* A real portrait inside a quiet, dimensional glass sphere. Ambient layers only
+   animate transform / opacity, and the chapter motion controller owns playback. */
+.hero-portrait { width: 100%; max-width: 450px; min-width: 0; justify-self: end; }
+.portrait-frame { position: relative; padding: 0; }
+.portrait-sphere { position: relative; width: 100%; aspect-ratio: 1; isolation: isolate; animation: portrait-float 10s ease-in-out infinite; }
+.portrait-halo { position: absolute; z-index: -1; inset: -13%; border-radius: 50%; background: radial-gradient(circle, transparent 40%, #b7bcf213 53%, #7676da0a 59%, transparent 71%); pointer-events: none; }
+.portrait-window { position: absolute; inset: 7px; aspect-ratio: 1; overflow: hidden; border-radius: 50%; border: 1px solid #d2d9f34a; background: #040916; box-shadow: inset 0 0 35px #c0cbee14, inset 8px 4px 22px #e9edff0c, 0 22px 65px #01030c88; isolation: isolate; }
+.portrait-abyss { position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse at 52% 84%, #4d4b895c 0%, #1a2b4c55 32%, transparent 58%), radial-gradient(ellipse at 9% 51%, #5270953d, transparent 43%), radial-gradient(ellipse at 86% 35%, #8d76af24, transparent 40%), linear-gradient(175deg, #020611 15%, #091022 64%, #18223b); }
+.portrait-mist { position: absolute; pointer-events: none; }
+.portrait-mist-back { z-index: 1; inset: 14% -25% -26%; border-radius: 50%; background: radial-gradient(ellipse at 29% 70%, #759dcb55, transparent 37%), radial-gradient(ellipse at 69% 73%, #8776c157, transparent 36%), radial-gradient(ellipse at 47% 99%, #d0c7e733, transparent 48%); animation: portrait-mist-drift 17s ease-in-out infinite alternate; }
+.portrait-mist-side { z-index: 1; inset: -10% -17%; border-radius: 50%; background: radial-gradient(ellipse at 12% 43%, #a1bfe529, transparent 32%), radial-gradient(ellipse at 87% 64%, #c2a8e72e, transparent 29%); animation: portrait-mist-drift 23s -9s ease-in-out infinite alternate-reverse; }
+.portrait-depth-stars { position: absolute; z-index: 2; inset: 0; opacity: .5; background: radial-gradient(circle at 18% 32%, #eaf5ff 0 .6px, transparent 1.4px), radial-gradient(circle at 81% 44%, #d7c7f8 0 .7px, transparent 1.5px), radial-gradient(circle at 24% 60%, #cfdfff 0 .5px, transparent 1.3px), radial-gradient(circle at 76% 23%, #d7dcf8 0 .5px, transparent 1.2px); pointer-events: none; }
+.portrait-placeholder { position: absolute; z-index: 2; inset: 0; display: grid; place-items: center; }
+.hero-portrait:is([data-portrait-state='ready'], [data-portrait-state='loading']) .portrait-placeholder { visibility: hidden; }
+.portrait-placeholder-copy { position: relative; text-align: center; color: #c7bedb; }
+.portrait-outline { width: 70px; height: 84px; margin: 0 auto 20px; stroke: #d4c0a1; stroke-width: .8; }
 .portrait-placeholder-copy > span { display: block; color: var(--accent); font-size: 7px; letter-spacing: .24em; }
 .portrait-placeholder-copy > p { margin-top: 10px; font-size: 12px; letter-spacing: .1em; }
-[data-portrait-image] { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+[data-portrait-image] { position: absolute; z-index: 3; left: 9%; bottom: -28%; width: 82%; max-width: none; height: auto; aspect-ratio: 2 / 3; object-fit: contain; object-position: center; opacity: 1; mask-image: radial-gradient(ellipse 52% 48% at 50% 45%, #000 64%, transparent 100%); }
 [data-portrait-image][hidden] { display: none; }
-.portrait-corner { position: absolute; width: 18px; height: 18px; pointer-events: none; border-color: #e4d0ac99; }
-.portrait-corner.corner-top { left: 9px; top: 9px; border-left: 1px solid; border-top: 1px solid; }
-.portrait-corner.corner-bottom { right: 9px; bottom: 9px; border-right: 1px solid; border-bottom: 1px solid; }
-.hero-portrait figcaption { display: flex; justify-content: space-between; gap: 15px; margin-top: 16px; line-height: 1.8; color: var(--muted); }
-.hero-portrait figcaption > span:first-child { white-space: nowrap; font-size: 7px; letter-spacing: .1em; }
-.hero-portrait figcaption > span:last-child { font-size: 9px; }
-.hero-portrait figcaption i { font-style: normal; color: var(--accent); margin-left: 12px; }
-.is-paged .hero-portrait { max-width: min(350px, 37svh); }
-@media (max-width: 1100px) {
-  .hero-portrait figcaption { gap: 8px; }
-  .hero-portrait figcaption > span:last-child { font-size: 8px; }
-  .hero-portrait figcaption i { display: none; }
-}
+.portrait-mist-front { z-index: 4; inset: 65% -22% -26%; border-radius: 50%; background: radial-gradient(ellipse at 27% 67%, #7085ae70, transparent 44%), radial-gradient(ellipse at 73% 75%, #b6a0cb47, transparent 42%), linear-gradient(0deg, #040916ed 7%, #09112514 88%, transparent); animation: portrait-veil-drift 14s -4s ease-in-out infinite alternate; }
+.portrait-reflection { position: absolute; z-index: 5; inset: 0; border-radius: 50%; pointer-events: none; background: radial-gradient(ellipse at 24% 14%, #e7eeff19, transparent 26%), radial-gradient(ellipse at 80% 78%, #c5b7ed0d, transparent 25%), radial-gradient(circle, transparent 63%, #a3b9e40a 72%, #d9e8ff26 87%, #060b1ca1 100%); box-shadow: inset 3px 2px 12px #e5eeff26, inset -4px -8px 19px #a7a1e924; transition: opacity .5s; opacity: .8; }
+.portrait-glass-arcs { position: absolute; z-index: 6; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: .85; }
+.portrait-rim { position: absolute; z-index: 7; inset: 3px; padding: 3px; border-radius: 50%; pointer-events: none; background: conic-gradient(from 15deg, #bcc7f918, #eaf5ff9e 15%, #a394d952 24%, #a3c3f40d 36%, #f2ddb26b 47%, #bbb9f06b 53%, #a7b8f014 64%, #e0ecff91 79%, #bda7e13b 89%, #bcc7f918); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: portrait-refraction-turn 46s linear infinite; }
+.portrait-glint { position: absolute; z-index: 8; inset: 3px; border-radius: 50%; pointer-events: none; animation: portrait-refraction-turn 32s -9s linear infinite reverse; }
+.portrait-glint::before { content: ''; position: absolute; top: 13%; left: 15%; width: 5px; height: 5px; border-radius: 50%; background: #f1f2ffbf; box-shadow: 0 0 9px 3px #c6d6ff75, 0 0 23px 9px #b4bfff26; }
+.hero-portrait:hover .portrait-reflection { opacity: 1; }
+.is-paged .hero-portrait { max-width: min(450px, 45svh); }
+.hero-portrait [data-crystal-motion] { animation-play-state: paused; }
+.chapter[data-motion-active='true'] .hero-portrait [data-crystal-motion] { animation-play-state: running; }
+@keyframes portrait-float { 0%, 100% { transform: translate3d(0, 3px, 0); } 50% { transform: translate3d(0, -5px, 0); } }
+@keyframes portrait-mist-drift { from { transform: translate3d(-3%, 4%, 0) rotate(-5deg); opacity: .6; } to { transform: translate3d(4%, -4%, 0) rotate(5deg); opacity: 1; } }
+@keyframes portrait-veil-drift { from { transform: translate3d(-4%, 3%, 0); opacity: .66; } to { transform: translate3d(4%, -4%, 0); opacity: .9; } }
+@keyframes portrait-refraction-turn { to { transform: rotate(360deg); } }
 @media (max-width: 760px) {
   .hero-portrait { max-width: 300px; justify-self: center; }
-  .hero-portrait figcaption { margin-top: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-portrait [data-crystal-motion] { animation: none !important; }
+  .portrait-reflection { transition: none; }
 }

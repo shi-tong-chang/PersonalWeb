@@ -59,8 +59,16 @@ function initializeMotion() {
       (!document.body.classList.contains('is-paged') || chapter.classList.contains('is-active'));
   }
 
+  function itemIsActive(item: RevealItem) {
+    if (!chapterIsActive(item.chapter)) return false;
+    // Overlaid panels share the same intersection geometry, even when hidden.
+    // Only reveal the selected project; tab changes keep their own animation.
+    const panel = item.element.closest<HTMLElement>('[data-project-panel]');
+    return !panel?.closest('[data-project-gallery].is-enhanced') || panel.classList.contains('is-current');
+  }
+
   function playReveal(item: RevealItem) {
-    if (!item.needsReveal || !item.visible || !item.readyToReveal || !chapterIsActive(item.chapter)) return;
+    if (!item.needsReveal || !item.visible || !item.readyToReveal || !itemIsActive(item)) return;
     item.needsReveal = false;
     const now = performance.now();
     // Boundary jitter and a quick reversal should not repeatedly fade readable text.
@@ -72,15 +80,20 @@ function initializeMotion() {
     item.lastPlayedAt = now;
     const requestedDelay = Number.parseFloat(item.element.dataset.revealDelay ?? '');
     const delay = Number.isFinite(requestedDelay) ? Math.max(0, Math.min(180, requestedDelay)) : Math.min(item.order * 45, 180);
-    const keyframes: Keyframe[] = [{ opacity: 0.22 }, { opacity: 1 }];
+    const direction = item.element.dataset.reveal;
+    const horizontal = direction === 'left' || direction === 'right';
+    const keyframes: Keyframe[] = [{ opacity: horizontal ? 0 : 0.22 }, { opacity: 1 }];
     // Interactive surfaces may opt into fade-only to keep native focus/hover
     // scroll geometry stable. Other wrappers preserve their existing transform.
-    if (item.element.dataset.reveal !== 'fade' && CSS.supports('translate', '0 1px') && getComputedStyle(item.element).translate === 'none') {
-      keyframes[0].translate = '0 14px';
+    if (direction !== 'fade' && CSS.supports('translate', '0 1px') && getComputedStyle(item.element).translate === 'none') {
+      // Individual translate composes with the gallery's parent transform.
+      // Smaller offsets keep stacked phone content inside its reading surface.
+      const distance = innerWidth <= 760 ? 40 : direction === 'left' ? 64 : 96;
+      keyframes[0].translate = horizontal ? `${direction === 'left' ? -distance : distance}px 0` : '0 14px';
       keyframes[1].translate = '0 0';
     }
     const animation = item.element.animate(keyframes, {
-      duration: 580,
+      duration: horizontal ? 760 : 580,
       delay,
       easing: 'cubic-bezier(.2,.75,.2,1)',
       fill: 'backwards',
@@ -103,7 +116,7 @@ function initializeMotion() {
       if (chapter.dataset.motionActive !== active) chapter.dataset.motionActive = active;
     });
     items.forEach(item => {
-      if (!item.visible || !chapterIsActive(item.chapter)) cancelReveal(item);
+      if (!item.visible || !itemIsActive(item)) cancelReveal(item);
       else if (allowReveals) playReveal(item);
     });
   }

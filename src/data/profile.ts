@@ -7,8 +7,9 @@ export const profile = {
   introduction: '你好，我是 Shi-Tong。喜歡探索不同領域，也喜歡把腦海裡的風景，一步步做成能被看見、被使用的作品。',
   biography: '',
   // Put the file in public/assets, then set src to e.g. '/assets/portrait.webp'.
-  // Empty src keeps the photo reservation. Position adjusts the crop.
-  portrait: { src: '', alt: 'Shi-Tong 的個人照片', position: 'center' },
+  // Empty src keeps the photo reservation. Clear mask when replacing the photo;
+  // its white silhouette is aligned to this original, unretouched 2:3 portrait.
+  portrait: { src: '/assets/portrait-crystal-v1.webp', mask: '/assets/portrait-mask-v1.webp', alt: 'Shi-Tong 的個人照片', position: 'center' },
   github: 'https://github.com/shi-tong-chang',
   email: '',
 };
@@ -32,7 +33,6 @@ export const copy = {
   projects: {
     eyebrow: '02 / PROJECT ATLAS',
     heading: ['讓想像', '成為作品。'],
-    subtitle: '從一個念頭出發，留下每一次探索與實作的軌跡。',
     action: '查看 GitHub 專案',
     footer: '作品持續累積中，其餘位置留給下一次探索。',
   },

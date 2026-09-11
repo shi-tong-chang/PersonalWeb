@@ -1,4 +1,5 @@
 /* A quiet astronomical atlas: a single work and its place in the constellation. */
+.projects { overflow-x: clip; }
 .projects-layout { min-width: 0; }
 .project-gallery {
   display: flex; flex-direction: column; min-width: 0; color: #eceaf4;
@@ -69,8 +70,6 @@
 .library-caption i { height: 1px; width: 24px; background: var(--archive-line); }
 [data-project-current] { font-family: var(--latin, sans-serif); color: var(--archive-accent); }
 .library-total { font-family: var(--latin, sans-serif); letter-spacing: 1px; margin-left: -6px; color: #9ca8c3; }
-.library-hint { font-size: 10px; color: var(--archive-muted); }
-.touch-hint { display: none; }
 .project-rail { position: relative; min-width: 0; }
 .project-track { display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; padding: 5px 3px 10px; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #b7a4df80 transparent; scroll-behavior: auto; scroll-padding-inline: 55px; }
 .project-gallery.is-enhanced .project-track { scrollbar-width: none; }
@@ -126,11 +125,10 @@
   .project-tab { flex-basis: 145px; }.tab-art { height: 62px; }
   .blank-constellation { width: 95%; height: 100%; right: -4%; top: -10%; }
   .blank-index { font-size: 105px; }
-  .hover-hint { display: none; }.touch-hint { display: inline; }
 }
 @media (max-width: 430px) {
   .library-caption { gap: 8px; font-size: 10px; }.library-caption > span:first-child { gap: 7px; }
-  .library-caption i { width: 12px; }.library-hint { font-size: 9px; }
+  .library-caption i { width: 12px; }
   .project-track { gap: 10px; }.project-tab { flex-basis: 133px; }
   .tab-art { height: 55px; }.tab-label { font-size: 10px; }.tab-label > small { font-size: 9px; }
   .project-edge { width: 35px; }.project-edge > span { width: 27px; }
@@ -175,7 +173,6 @@
   .is-paged .visual-caption { margin-top: 9px; font-size: 7px; }
   .is-paged .project-library { margin-top: 14px; }
   .is-paged .library-caption { font-size: 10px; margin-bottom: 7px; }
-  .is-paged .library-hint { font-size: 9px; }
   .is-paged .project-track { padding-block: 3px 7px; }
   .is-paged .project-tab { padding-top: 4px; }
   .is-paged .tab-art { height: 44px; }
@@ -183,9 +180,6 @@
   .is-paged .tab-star { top: 8px; font-size: 23px; }
   .is-paged .tab-orbit { top: -3px; }
   .is-paged .library-baseline { margin-top: 4px; }
-}
-@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
-  .hover-hint { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .project-gallery *, .project-gallery *::before, .project-gallery *::after { animation: none !important; transition: none !important; }
