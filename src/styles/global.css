@@ -34,24 +34,6 @@ img, svg { display: block; max-width: 100%; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .skip-link { position: fixed; top: -100px; left: 20px; z-index: 100; background: var(--silver); color: var(--night); padding: 14px; }
 .skip-link:focus { top: 10px; }
-.site-header { position: fixed; inset: 0 0 auto; z-index: 30; min-height: var(--header-height); padding: 0 var(--gutter); display: flex; justify-content: space-between; align-items: center; gap: 24px; color: var(--silver); background: #070d1cf5; border-bottom: 1px solid #bec2df1c; transition: background .25s, border-color .25s; }
-body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c45; border-bottom-color: transparent; }
-.site-header.is-scrolled { background: #070d1cf2; backdrop-filter: blur(16px); }
-.brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-.brand-symbol { width: 29px; height: 29px; color: var(--accent); }
-.brand-wordmark { font-size: 10px; letter-spacing: .15em; font-weight: 500; }
-.brand-wordmark > span { display: block; font-size: 7px; font-weight: 400; letter-spacing: .23em; margin-top: 6px; color: var(--muted); }
-.top-nav { display: flex; align-items: center; gap: clamp(20px, 2.8vw, 44px); }
-.top-nav a { position: relative; padding: 16px 0; font-size: 12px; letter-spacing: .06em; color: var(--muted); transition: color .2s; white-space: nowrap; }
-.top-nav a[aria-current], .top-nav a:hover { color: var(--accent); }
-.top-nav a::after { content: ''; width: 4px; height: 4px; transform: rotate(45deg); background: currentColor; position: absolute; left: calc(50% - 2px); bottom: 5px; opacity: 0; }
-.top-nav a[aria-current]::after { opacity: 1; }
-.header-actions { display: flex; align-items: center; gap: 22px; }
-.header-github { display: flex; align-items: center; gap: 10px; font-size: 9px; letter-spacing: .12em; color: var(--muted); }
-.header-github > span[aria-hidden] { font-size: 17px; }
-.header-contact { display: flex; align-items: center; gap: 17px; border: 1px solid #c7b49559; padding: 11px 17px; border-radius: 3px; color: var(--accent); font-size: 8px; letter-spacing: .1em; transition: background .2s; }
-.header-contact > span { font-size: 16px; }
-.header-contact:hover { background: #d9c09312; }
 .section-inner { width: 100%; max-width: 1300px; margin-inline: auto; position: relative; z-index: 1; }
 .chapter { position: relative; isolation: isolate; }
 .chapter-sky { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; }
@@ -153,31 +135,18 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c4
 #next-chapter { display: flex; gap: 20px; align-items: center; padding: 12px 0; font-size: 10px; color: var(--text); }
 #next-arrow { color: var(--accent); font-size: 19px; }
 
-@media (max-width: 1200px) {
-  .header-github { display: none; }
-  .header-actions { gap: 0; }
-  .header-contact { padding: 10px 13px; font-size: 7px; }
-  .top-nav { gap: 24px; }
-}
 @media (max-width: 1100px) {
   .skills-layout, .contact-layout { gap: 7%; }
   .chapter-rail { right: 10px; }
   .dock-caption { font-size: 6px; }
 }
 @media (max-width: 899px) {
-  .header-actions, .chapter-rail { display: none; }
+  :root { --header-height: 100px; }
+  .chapter-rail { display: none; }
   .dock-caption { display: none; }
 }
 @media (max-width: 760px) {
   :root { --header-height: 100px; --dock-height: 48px; }
-  .site-header { flex-wrap: wrap; gap: 0; padding-block: 13px 5px; }
-  .brand { width: 100%; justify-content: center; gap: 8px; }
-  .brand-symbol { width: 20px; height: 20px; }
-  .brand-wordmark { font-size: 10px; }
-  .brand-wordmark > span { display: none; }
-  .top-nav { width: 100%; justify-content: center; gap: clamp(14px, 3.5vw, 32px); margin-top: 6px; }
-  .top-nav a { padding: 10px 0; font-size: 11px; }
-  .top-nav a::after { bottom: 2px; }
   .about { align-items: start; min-height: 100svh; padding-top: 154px; padding-bottom: calc(var(--dock-height) + 112px); }
   .about-layout { grid-template-columns: minmax(0, 1fr); gap: 44px; }
   .hero-copy { width: 100%; max-width: 520px; }
@@ -208,8 +177,6 @@ body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c4
 }
 @media (max-width: 370px) {
   :root { --gutter: 20px; }
-  .top-nav { gap: 12px; }
-  .top-nav a { font-size: 10px; }
   .about { padding-top: 147px; }
   .hero-tagline { font-size: 17px; letter-spacing: .06em; }
   .hero-actions { gap: 20px; }

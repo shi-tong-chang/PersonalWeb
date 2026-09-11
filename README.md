@@ -32,6 +32,7 @@ npm run test:e2e
 - `src/pages/index.astro`：首頁 → 完整專案主舞台與索引 → 探索方向 → 大事記 → 聯繫方式。
 - `src/components/Portrait.astro`、`src/styles/portrait.css`、`src/scripts/portraits.ts`：首頁動態水晶球、原照片與輪廓遮罩、固定比例及載入失敗備援。
 - `src/components/HeroName.astro`、`src/styles/hero-name.css`：首頁上中文、下英文的雙語藝術署名，保留可選取文字與字型載入失敗時的襯線字備援。
+- `src/components/SiteHeader.astro`、`src/components/ChapterGlyph.astro`、`src/styles/header.css`：五款星圖導覽符號、選取與懸停狀態、手機雙排導覽和持續可用的 GitHub 圖標入口；沿用既有 `aria-current` 與錨點，不新增動畫套件。
 - `src/components/Timeline.astro`、`src/styles/timeline.css`：有序大事記、星軌節點、手機單欄與長文閱讀。
 - `src/components/ProjectGallery.astro`、`src/styles/projects.css`、`src/scripts/projects.ts`：完整作品庫的主舞台、水平選擇列、鍵盤／懸停互動。
 - `src/styles/global.css`：全站宇宙色彩、字型、版型、手機裁切、固定章節索引／進度與少量星光動態。
@@ -48,6 +49,8 @@ npm run test:e2e
 `profile.biography` 與 `profile.email` 可留空。設定 Email 後會顯示寄信與複製功能，請只放願意公開的地址。具體技能可填在 `skills` 的標籤與說明。
 
 首頁中文姓名使用 `profile.chineseName`，請填入本人確認的正確中文字；留空時只顯示英文，不會從拼音推測或放入假姓名。下排英文沿用 `profile.displayName.join(' ')`。中文使用 [Noto Serif TC](https://fonts.google.com/specimen/Noto+Serif+TC)，英文使用 [Cormorant Garamond](https://fonts.google.com/specimen/Cormorant+Garamond)，搭配靜態月光漸層與星芒分隔線；導覽列、其他章節與既有切頁功能不變。
+
+導覽名稱集中在 `chapters`：個人介紹、專案經歷、擅長技能、特殊成就、與我聯繫。「特殊成就」目前沿用原時間線內容預留與 `#timeline` 錨點，沒有新增未提供的獎項或資歷；`#contact` 也保持相容。五款導覽符號為原創 SVG；GitHub 標記使用 [官方 Octicons](https://github.com/primer/octicons/blob/main/icons/mark-github-16.svg)，MIT 授權隨網站發布於 `public/licenses/octicons.txt`。
 
 ## 放入照片與大事記
 

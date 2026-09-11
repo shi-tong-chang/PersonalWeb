@@ -446,7 +446,7 @@ test('mobile touch controls reach the tenth project without page overflow', asyn
     await expect(page.getByRole('tabpanel')).toHaveCount(1);
     await expect(page.getByRole('tabpanel')).toHaveAccessibleName(/專案 10/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).tap();
+    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /與我聯繫/ }).tap();
     await expect(page.locator('#contact')).toBeInViewport();
   } finally {
     await context.close();
@@ -498,7 +498,7 @@ test('without JavaScript or web fonts all ten project articles remain readable i
     }
     await expect(panels.last()).toHaveAccessibleName('專案 10');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).click();
+    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /與我聯繫/ }).click();
     await expect(page.locator('#contact')).toBeInViewport();
   } finally {
     await context.close();

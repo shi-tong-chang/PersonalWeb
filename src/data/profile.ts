@@ -20,8 +20,8 @@ export const chapters = [
   { id: 'about', label: '個人介紹', number: '01' },
   { id: 'projects', label: '專案經歷', number: '02' },
   { id: 'skills', label: '擅長技能', number: '03' },
-  { id: 'timeline', label: '大事記', number: '04' },
-  { id: 'contact', label: '聯繫方式', number: '05' },
+  { id: 'timeline', label: '特殊成就', number: '04' },
+  { id: 'contact', label: '與我聯繫', number: '05' },
 ] as const;
 
 export const copy = {

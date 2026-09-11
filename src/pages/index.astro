@@ -5,6 +5,7 @@ import ChapterScene from '../components/ChapterScene.astro';
 import Portrait from '../components/Portrait.astro';
 import HeroName from '../components/HeroName.astro';
 import Timeline from '../components/Timeline.astro';
+import SiteHeader from '../components/SiteHeader.astro';
 import '../styles/global.css';
 import '../styles/motion.css';
 
@@ -37,11 +38,7 @@ const landscape = `${base}/assets/milky-way-v1.webp`;
   </head>
   <body data-theme="about">
     <a class="skip-link" href="#about">跳至主要內容</a>
-    <header class="site-header">
-      <a class="brand" href="#about" aria-label={`${profile.monogram}，回到個人介紹`}><svg class="brand-symbol" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 19.3 12.7 30 16 19.3 19.3 16 30 12.7 19.3 2 16 12.7 12.7Z" fill="none" stroke="currentColor"/><circle cx="16" cy="16" r="2" fill="currentColor"/></svg><span class="brand-wordmark">{profile.displayName.join(' ')}<span>PERSONAL PORTFOLIO</span></span></a>
-      <nav class="top-nav" aria-label="章節導覽">{chapters.map((chapter, index) => <a href={`#${chapter.id}`} data-chapter={index} aria-current={index === 0 ? 'location' : undefined}>{chapter.label}</a>)}</nav>
-      <div class="header-actions"><a class="header-github" href={profile.github} target="_blank" rel="noopener noreferrer">GITHUB <span aria-hidden="true">↗</span><span class="sr-only">（另開分頁）</span></a><a class="header-contact" href="#contact">LET’S CONNECT <span aria-hidden="true">✧</span></a></div>
-    </header>
+    <SiteHeader />
 
     <main id="main-content" aria-label="個人介紹、作品與探索">
       <section class="chapter about" id="about" aria-labelledby="about-heading" tabindex="-1">

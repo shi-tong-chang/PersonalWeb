@@ -1,0 +1,119 @@
+/* Five coordinates on one star chart. Existing aria-current drives the active
+   chapter; all embellishments are CSS/SVG and never own navigation or scrolling. */
+.site-header {
+  position: fixed; inset: 0 0 auto; z-index: 30;
+  height: var(--header-height); min-height: var(--header-height);
+  padding: 0 var(--gutter);
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center; gap: clamp(12px, 1.6vw, 24px);
+  color: var(--silver); background: #070d1cf5;
+  border-bottom: 1px solid #bec2df1c;
+  transition: background .25s, border-color .25s;
+}
+body:has(.about.is-active) .site-header:not(.is-scrolled) { background: #070d1c70; border-bottom-color: #c5b6dd18; }
+.site-header.is-scrolled { background: #070d1cf2; backdrop-filter: blur(16px); }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-symbol { width: 29px; height: 29px; flex: 0 0 auto; color: var(--accent); }
+.brand-wordmark { font-size: 10px; letter-spacing: .15em; font-weight: 500; white-space: nowrap; }
+.brand-wordmark > span { display: block; font-size: 7px; font-weight: 400; letter-spacing: .23em; margin-top: 6px; color: var(--muted); }
+.top-nav {
+  display: flex; align-items: center; justify-self: center; gap: 4px;
+  min-width: 0; padding: 4px; border: 1px solid #b7a4df30; border-radius: 7px;
+  background: linear-gradient(120deg, #c4b6e209, #0a1226b8 42%, #b7a4df0c);
+  box-shadow: inset 0 1px #e8dff80a, 0 8px 25px -16px #0009;
+}
+.top-nav a {
+  position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center;
+  gap: 7px; min-width: 0; min-height: 52px; padding: 8px 12px 8px 9px;
+  border: 1px solid transparent; border-radius: 4px; color: #bbc4d9;
+  white-space: nowrap; transition: color .25s, background-color .25s, border-color .25s;
+}
+.top-nav a::before {
+  content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit;
+  background: radial-gradient(ellipse at 22% 28%, #d9c09320, transparent 72%), linear-gradient(110deg, #b7a4df0c, transparent);
+  opacity: 0; transition: opacity .3s;
+}
+.top-nav a::after {
+  content: ''; position: absolute; bottom: 3px; left: 16%; right: 16%; height: 1px;
+  background: linear-gradient(90deg, transparent, #e8d5ab 50%, transparent);
+  opacity: 0; transform: scaleX(.3); transition: transform .4s ease, opacity .3s;
+}
+.nav-emblem {
+  display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 auto;
+  color: #b7a4df; border: 1px solid #b7a4df20; border-radius: 50%;
+  transition: transform .4s ease, color .25s, border-color .25s, box-shadow .3s;
+}
+.nav-emblem .chapter-glyph { width: 24px; height: 24px; }
+.nav-label { font: 500 13px/1.4 'Noto Serif TC', 'Songti TC', serif; letter-spacing: .055em; }
+.nav-coordinate { position: absolute; top: 3px; right: 5px; font: 6px/1 var(--latin); letter-spacing: .08em; color: #b7a4df85; }
+.top-nav a:is(:hover, :focus-visible, [aria-current]) { color: #f3dfb8; border-color: #d9c09355; }
+.top-nav a:is(:hover, :focus-visible, [aria-current])::before { opacity: 1; }
+.top-nav a:is(:hover, :focus-visible, [aria-current])::after { opacity: .85; transform: scaleX(1); }
+.top-nav a:is(:hover, :focus-visible, [aria-current]) .nav-emblem { color: #e6cea0; border-color: #d9c09370; box-shadow: 0 0 14px #d9c09318; }
+.top-nav a[aria-current] .nav-coordinate { color: var(--accent); }
+.top-nav a[aria-current] { background-color: #c6b5e10a; }
+.top-nav a:focus-visible { outline: 2px solid #ebd5ab; outline-offset: 1px; }
+@media (hover: hover) and (pointer: fine) {
+  .top-nav a:hover .nav-emblem { transform: translateY(-1px) rotate(-8deg); }
+}
+.header-actions { display: flex; align-items: center; gap: 12px; }
+.header-github {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  min-width: 44px; min-height: 44px; border: 1px solid #b7a4df35; border-radius: 5px;
+  padding: 9px 11px; color: #d5dbea; background: #b7a4df05;
+  transition: border-color .25s, background-color .25s, color .25s, box-shadow .25s;
+}
+.github-mark { width: 19px; height: 19px; flex: 0 0 auto; }
+.github-label { font: 9px/1 var(--latin); letter-spacing: .12em; }
+.github-arrow { font: 16px/1 var(--latin); color: var(--muted); }
+.header-github:is(:hover, :focus-visible) { color: #fff5df; border-color: #d9c0939c; background: #d9c0930d; box-shadow: 0 0 18px #d9c09312; }
+.header-contact { display: flex; align-items: center; gap: 12px; border: 1px solid #c7b49559; padding: 11px 13px; border-radius: 3px; color: var(--accent); font-size: 8px; letter-spacing: .1em; white-space: nowrap; transition: background .25s; }
+.header-contact > span { font-size: 16px; }
+.header-contact:hover { background: #d9c09312; }
+@media (max-width: 1350px) {
+  .header-contact { display: none; }
+}
+@media (max-width: 1100px) {
+  .brand { gap: 9px; }
+  .brand-wordmark { font-size: 9px; letter-spacing: .1em; }
+  .brand-wordmark > span { font-size: 6px; }
+  .top-nav { gap: 0; padding: 3px; }
+  .top-nav a { gap: 5px; padding-inline: 6px 9px; min-height: 50px; }
+  .nav-emblem { width: 25px; height: 25px; }
+  .nav-emblem .chapter-glyph { width: 21px; height: 21px; }
+  .nav-label { font-size: 12px; letter-spacing: .035em; }
+  .header-github { padding: 9px; }
+  .github-label, .github-arrow { display: none; }
+}
+@media (max-width: 899px) {
+  .site-header { grid-template-columns: 44px minmax(0, 1fr) 44px; grid-template-rows: 44px 48px; gap: 0; padding: 4px 14px; border-bottom: 0; }
+  .brand { grid-column: 2; grid-row: 1; justify-self: center; gap: 8px; }
+  .brand-symbol { width: 22px; height: 22px; }
+  .brand-wordmark { font-size: 9px; letter-spacing: .15em; }
+  .brand-wordmark > span { display: none; }
+  .header-actions { grid-column: 3; grid-row: 1; justify-self: end; }
+  .header-github { min-width: 44px; min-height: 44px; padding: 10px; border-color: transparent; background: transparent; }
+  .github-mark { width: 19px; height: 19px; }
+  .top-nav { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; gap: 2px; padding: 1px; border-radius: 5px; align-self: stretch; }
+  .top-nav a { flex-direction: column; gap: 1px; padding: 2px 1px; min-height: 44px; }
+  .nav-emblem { width: 21px; height: 21px; border: 0; box-shadow: none !important; }
+  .nav-emblem .chapter-glyph { width: 21px; height: 21px; }
+  .nav-label { font-size: 11px; line-height: 1.25; letter-spacing: .025em; }
+  .nav-coordinate { display: none; }
+  .top-nav a::after { bottom: 0; left: 20%; right: 20%; }
+}
+@media (max-width: 350px) {
+  .site-header { padding-inline: 10px; }
+  .brand-wordmark { font-size: 8px; letter-spacing: .12em; }
+  .nav-label { font-size: 10px; letter-spacing: .01em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-header *, .site-header *::before, .site-header *::after { transition: none !important; }
+  .top-nav a:hover .nav-emblem { transform: none; }
+}
+@media (forced-colors: active) {
+  .top-nav, .header-github { border-color: ButtonText; }
+  .top-nav a, .nav-emblem { color: LinkText; }
+  .top-nav a[aria-current] { border-color: Highlight; outline: 1px solid Highlight; outline-offset: -3px; }
+  .top-nav a::before, .top-nav a::after { display: none; }
+}

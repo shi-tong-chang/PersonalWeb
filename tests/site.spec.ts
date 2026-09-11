@@ -149,8 +149,8 @@ test('chapter navigation, accessible focus, deep links and reload work', async (
     ['about', '個人介紹'],
     ['projects', '專案經歷'],
     ['skills', '擅長技能'],
-    ['timeline', '大事記'],
-    ['contact', '聯繫方式'],
+    ['timeline', '特殊成就'],
+    ['contact', '與我聯繫'],
   ]) {
     const link = navigation.getByRole('link', { name: label });
     await expect(link).toHaveAttribute('href', `#${id}`);
@@ -279,7 +279,7 @@ test('the mobile dock follows native reading without adding history or overwriti
   expect(dockBounds!.x).toBeGreaterThanOrEqual(0);
   expect(dockBounds!.x + dockBounds!.width).toBeLessThanOrEqual(390);
   const navigation = page.getByRole('navigation', { name: '章節導覽' });
-  await navigation.getByRole('link', { name: '聯繫方式' }).click();
+  await navigation.getByRole('link', { name: '與我聯繫' }).click();
   await expect(page.locator('#current-chapter')).toHaveText('05');
   await expect(page.locator('#next-chapter')).toHaveAttribute('href', '#about');
   // Observe completion before clicking: scrollY <= 2 can still be the last
@@ -609,7 +609,7 @@ test('long project copy remains reachable without clipping the always-visible st
       && bounds.left >= Math.max(0, section.left)
       && bounds.right <= Math.min(innerWidth, section.right);
   }), { message: 'The final line must be fully visible inside its section between the header and dock.' }).toBe(true);
-  await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).click();
+  await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /與我聯繫/ }).click();
   await expectChapterAtTop(page, 'contact');
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
 });
@@ -653,7 +653,7 @@ test('large touch screens retain native scrolling and accessible navigation', as
   try {
     await page.goto(siteURL);
     await expect(page.locator('body')).not.toHaveClass(/is-paged/);
-    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).tap();
+    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /與我聯繫/ }).tap();
     await expect(page.locator('#contact')).toBeInViewport();
     await expect(page.locator('#contact')).toBeFocused();
     await expect(page.locator('.chapter[inert]')).toHaveCount(0);
@@ -679,7 +679,7 @@ test('reduced motion disables hero animation and parallax without changing acces
   await expect(page.locator('#about')).toHaveCSS('--scene-shift', '0px');
   await expect(page.locator('#about')).toHaveCSS('--scene-scale', '1');
   await expect(page.locator('#about')).toHaveCSS('--scene-opacity', '1');
-  await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).click();
+  await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /與我聯繫/ }).click();
   await expect(page.locator('#contact')).toBeInViewport();
   await page.setViewportSize({ width: 1440, height: 600 });
   await expect(page.locator('body')).not.toHaveClass(/is-paged/);
@@ -761,7 +761,7 @@ test('without JavaScript or web fonts native navigation and the full project gal
     await expect(page.locator('#projects details, #projects summary')).toHaveCount(0);
     await expect(archive.locator('[data-project-panel]')).toHaveCount(10);
     await expect(archive.locator('[data-project-panel][inert]')).toHaveCount(0);
-    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).click();
+    await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /與我聯繫/ }).click();
     await expect(page.locator('#contact')).toBeInViewport();
   } finally {
     await context.close();
