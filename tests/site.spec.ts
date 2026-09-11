@@ -229,7 +229,24 @@ test('the mobile dock follows native reading without adding history or overwriti
   await navigation.getByRole('link', { name: '聯繫方式' }).click();
   await expect(page.locator('#current-chapter')).toHaveText('04');
   await expect(page.locator('#next-chapter')).toHaveAttribute('href', '#about');
-  await page.locator('#next-chapter').click();
+  // Observe completion before clicking: scrollY <= 2 can still be the last
+  // frames of a native smooth scroll and is not yet a fresh-wheel boundary.
+  await Promise.all([
+    page.evaluate(() => new Promise<void>((resolve, reject) => {
+      const onScrollEnd = () => {
+        if (scrollY > 2) return;
+        clearTimeout(timeout);
+        window.removeEventListener('scrollend', onScrollEnd);
+        resolve();
+      };
+      const timeout = window.setTimeout(() => {
+        window.removeEventListener('scrollend', onScrollEnd);
+        reject(new Error('Native return-to-about scrolling did not finish within five seconds.'));
+      }, 5000);
+      window.addEventListener('scrollend', onScrollEnd);
+    })),
+    page.locator('#next-chapter').click(),
+  ]);
   await expect(page.locator('#current-chapter')).toHaveText('01');
   await expect(page).toHaveURL(/#about$/);
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
@@ -257,7 +274,7 @@ test('the mobile dock follows native reading without adding history or overwriti
   expect(await page.evaluate(() => history.length)).toBe(deepLinkHistoryLength);
 });
 
-test('closed chapters fit common desktop viewports without clipping their content', async ({ page }) => {
+test('all four chapters and the complete project stage fit common desktop viewports without clipping', async ({ page }) => {
   for (const viewport of [
     { width: 1440, height: 900 },
     { width: 1366, height: 768 },
@@ -286,6 +303,17 @@ test('closed chapters fit common desktop viewports without clipping their conten
       expect(Math.abs(bounds.height - viewport.height), `${id} should occupy one ${viewport.height}px viewport.`).toBeLessThanOrEqual(2);
       expect(bounds.contentVisible, `${id} content must fit between header and dock at ${viewport.width}×${viewport.height}.`).toBe(true);
       expect(bounds.noOverflow).toBe(true);
+      if (id === 'projects') {
+        await expectBetweenHeaderAndDock(page.locator('#projects-heading'));
+        await expectBetweenHeaderAndDock(page.locator('[data-project-track]'));
+        await expectBetweenHeaderAndDock(page.locator('.library-caption'));
+        const panel = page.getByRole('tabpanel');
+        for (const selector of ['h3.project-name', '.project-description', '.tags', '.project-actions', '.project-visual']) {
+          await expectBetweenHeaderAndDock(panel.locator(selector));
+        }
+        // Role copy is optional and currently empty in the real project data.
+        if (await panel.locator('.project-role').count()) await expectBetweenHeaderAndDock(panel.locator('.project-role'));
+      }
     }
   }
 });
@@ -321,51 +349,83 @@ test('switching desktop, mobile, short-screen and reduced-motion modes preserves
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
 });
 
-test('three featured projects clearly separate the real website from two reserved slots', async ({ page }) => {
+test('entering projects directly reveals ten equal-priority slots with honest reservations and a usable legacy fragment', async ({ page }) => {
   await page.goto('./#projects');
-  const archive = page.locator('details#project-archive');
-  await expect(archive).not.toHaveAttribute('open');
-  const cards = page.locator('.featured-grid a.featured-card[data-project-open]');
-  await expect(cards).toHaveCount(3);
-  await expect(cards.first()).toHaveAttribute('data-project-open', 'personal-web');
-  await expect(cards.first()).toContainText('PersonalWeb');
-  await expect(cards.first()).not.toContainText('預留');
-  for (const card of await cards.all()) await expect(card).toHaveAttribute('href', '#project-archive');
-  for (const card of [cards.nth(1), cards.nth(2)]) await expect(card).toContainText('預留');
+  await expectChapterAtTop(page, 'projects');
+  const gallery = page.locator('[data-project-gallery]');
+  const tabs = gallery.getByRole('tab');
+  await expect(page.locator('div#project-archive.project-atlas')).toBeVisible();
+  await expect(page.locator('.featured-card, [data-project-open], #projects details, #projects summary')).toHaveCount(0);
+  await expect(gallery).toBeInViewport();
+  await expect(gallery).toHaveAccessibleName(/作品/);
+  await expect(tabs).toHaveCount(10);
+  await expect(tabs.first()).toContainText('PersonalWeb');
+  await expect(tabs.first()).not.toContainText('預留');
+  for (const tab of await tabs.all()) await expect(tab).toHaveClass('project-tab');
+  for (const tab of (await tabs.all()).slice(1)) await expect(tab).toContainText('預留');
+  const tabWidths = await tabs.evaluateAll(elements => elements.map(element => element.getBoundingClientRect().width));
+  expect(Math.max(...tabWidths) - Math.min(...tabWidths)).toBeLessThanOrEqual(1);
+  await expect(gallery.getByRole('tabpanel')).toHaveCount(1);
+  await expect(gallery.locator('.project-state.is-reserved')).toHaveCount(9);
+  await page.goto('./#project-archive');
+  await expect(gallery).toBeInViewport();
+  await expect(page.getByRole('tabpanel').locator('h3.project-name')).toBeInViewport();
+  await expect(page).toHaveURL(/#project-archive$/);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
 });
 
 for (const height of [900, 600]) {
-  test(`each featured card opens its matching panel with visible keyboard focus at ${height}px height`, async ({ page }) => {
+  test(`direct project selection keeps keyboard focus visible at ${height}px height`, async ({ page }) => {
     await page.setViewportSize({ width: 1440, height });
     await page.goto('./#projects');
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
-    const archive = page.locator('details#project-archive');
-    const cards = page.locator('.featured-grid a.featured-card[data-project-open]');
-    for (const card of await cards.all()) {
-      const id = await card.getAttribute('data-project-open');
-      await card.click();
-      await expect(archive).toHaveAttribute('open');
+    const gallery = page.locator('[data-project-gallery]');
+    const track = page.locator('[data-project-track]');
+    if (height === 900) await expectChapterAtTop(page, 'projects');
+    if (height === 600) await track.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    // Establish focus without starting the browser's separate smooth focus
+    // scroll, so the assertion below measures only project selection behavior.
+    await gallery.getByRole('tab').first().evaluate(element => (element as HTMLElement).focus({ preventScroll: true }));
+    const initialScroll = await page.evaluate(() => scrollY);
+    for (const [key, id] of [['ArrowRight', 'project-02'], ['End', 'project-10'], ['Home', 'personal-web']]) {
+      await page.keyboard.press(key);
       const tab = page.locator(`#project-tab-${id}`);
       await expect(tab).toHaveAttribute('aria-selected', 'true');
       await expect(tab).toBeFocused();
       await expect(tab).toBeInViewport();
       await expectBetweenHeaderAndDock(tab);
-      if (height === 900) await expectBetweenHeaderAndDock(page.locator('.gallery-heading'));
+      if (height === 900) await expectBetweenHeaderAndDock(page.locator('#projects-heading'));
       await expect(page.locator(`#project-panel-${id}`)).toHaveAttribute('aria-hidden', 'false');
-      await expect(archive.getByRole('tabpanel')).toHaveCount(1);
-      await archive.locator(':scope > summary').click();
-      await expect(archive).not.toHaveAttribute('open');
+      await expect(gallery.getByRole('tabpanel')).toHaveCount(1);
+      await expect(page).toHaveURL(new RegExp(`#project-panel-${id}$`));
+      expect(Math.abs(await page.evaluate(() => scrollY) - initialScroll)).toBeLessThanOrEqual(2);
     }
   });
 }
 
-test('an expanded archive reads within its chapter and only a fresh boundary gesture changes pages', async ({ page }) => {
+test('native Tab focus does not shift a fully visible project rail out of its desktop chapter', async ({ page }) => {
+  await page.goto('./#projects');
+  await expectChapterAtTop(page, 'projects');
+  const firstTab = page.getByRole('tab').first();
+  await expectBetweenHeaderAndDock(firstTab);
+  await page.locator('#projects').evaluate(element => (element as HTMLElement).focus({ preventScroll: true }));
+  await page.keyboard.press('Tab');
+  await expect(firstTab).toBeFocused();
+  // Include any browser-owned smooth focus scrolling, not just the immediate
+  // keydown result. Existing fixed-dock padding should not be counted twice.
+  await page.waitForTimeout(650);
+  await expectChapterAtTop(page, 'projects');
+  await expectBetweenHeaderAndDock(firstTab);
+});
+
+test('long project content reads within its chapter and only a fresh boundary gesture changes pages', async ({ page }) => {
   await page.goto('./#projects');
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
   await expectChapterAtTop(page, 'projects');
   const projects = page.locator('#projects');
-  await page.locator('#project-archive > summary').click();
-  await expect(page.locator('#project-archive')).toHaveAttribute('open');
+  await page.getByRole('tabpanel').locator('.project-description').evaluate(element => {
+    element.append(document.createTextNode('補上背景、技術選擇與實作心得，長內容也必須能完整閱讀。'.repeat(90)));
+  });
   await expect.poll(() => projects.evaluate(section => section.getBoundingClientRect().height - innerHeight)).toBeGreaterThan(200);
   await projects.evaluate(section => window.scrollTo({ top: section.getBoundingClientRect().top + scrollY, behavior: 'instant' }));
   await page.waitForTimeout(250);
@@ -393,15 +453,21 @@ test('an expanded archive reads within its chapter and only a fresh boundary ges
   await expectChapterAtTop(page, 'skills');
 });
 
-test('featured navigation cancels a running chapter transition without losing visible focus', async ({ page }) => {
-  await page.goto('./');
+test('direct project selection cancels an older chapter transition and remains reloadable', async ({ page }) => {
+  await page.goto('./#projects');
   await expect(page.locator('body')).toHaveClass(/is-paged/);
-  await page.mouse.move(700, 500);
-  await page.mouse.wheel(0, 180);
-  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(10);
-  await page.locator('[data-project-open="project-02"]').evaluate(link => (link as HTMLAnchorElement).click());
+  await expectChapterAtTop(page, 'projects');
+  await page.locator('.top-nav a[href="#skills"]').click();
+  await page.waitForTimeout(120);
   const tab = page.locator('#project-tab-project-02');
-  await expect(page.locator('#project-archive')).toHaveAttribute('open');
+  const selectedAt = await tab.evaluate(element => {
+    const tab = element as HTMLAnchorElement;
+    tab.focus({ preventScroll: true });
+    tab.click();
+    return scrollY;
+  });
+  expect(selectedAt).toBeGreaterThan(900);
+  expect(selectedAt).toBeLessThan(1800);
   await expect(tab).toBeFocused();
   await expect(tab).toHaveAttribute('aria-selected', 'true');
   await expect(page).toHaveURL(/#project-panel-project-02$/);
@@ -410,19 +476,17 @@ test('featured navigation cancels a running chapter transition without losing vi
   await expect(tab).toBeFocused();
   await expect(tab).toBeInViewport();
   await expectBetweenHeaderAndDock(tab);
+  expect(Math.abs(await page.evaluate(() => scrollY) - selectedAt)).toBeLessThanOrEqual(2);
   await page.reload();
-  await expect(page.locator('#project-archive')).toHaveAttribute('open');
   await expect(tab).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('tabpanel')).toHaveAttribute('id', 'project-panel-project-02');
-  await expect(page.getByRole('tabpanel').locator('h4.project-name')).toBeInViewport();
+  await expect(page.getByRole('tabpanel').locator('h3.project-name')).toBeInViewport();
   await expect(page).toHaveURL(/#project-panel-project-02$/);
 });
 
 test('PageDown and ArrowDown read long chapter content before leaving it', async ({ page }) => {
   await page.goto('./#projects');
   await expectChapterAtTop(page, 'projects');
-  await page.locator('#project-archive > summary').click();
-  await expect(page.locator('#project-archive')).toHaveAttribute('open');
   await page.getByRole('tabpanel').locator('.project-description').evaluate(element => {
     element.append(document.createTextNode('補上背景、技術選擇與實作心得，長內容也必須能完整閱讀。'.repeat(90)));
   });
@@ -444,11 +508,11 @@ test('PageDown and ArrowDown read long chapter content before leaving it', async
   await expect(page).toHaveURL(/#projects$/);
 });
 
-test('a later chapter link wins over a featured card in the same frame', async ({ page }) => {
+test('a later chapter link wins over direct project selection in the same frame', async ({ page }) => {
   await page.goto('./#projects');
   await expectChapterAtTop(page, 'projects');
   await page.evaluate(() => {
-    document.querySelector<HTMLAnchorElement>('[data-project-open="project-02"]')!.click();
+    document.querySelector<HTMLAnchorElement>('#project-tab-project-02')!.click();
     document.querySelector<HTMLAnchorElement>('.top-nav a[href="#contact"]')!.click();
   });
   await expectChapterAtTop(page, 'contact');
@@ -459,11 +523,9 @@ test('a later chapter link wins over a featured card in the same frame', async (
   await expect(page.locator('#contact')).toBeFocused();
 });
 
-test('long project copy remains reachable after the archive expands', async ({ page }) => {
+test('long project copy remains reachable without clipping the always-visible stage', async ({ page }) => {
   await page.goto('./#projects');
-  const archive = page.locator('details#project-archive');
-  await archive.locator(':scope > summary').click();
-  await expect(archive).toHaveAttribute('open');
+  const archive = page.locator('div#project-archive');
   await archive.getByRole('tabpanel').locator('.project-description').evaluate(element => {
     element.append(document.createTextNode('這是延長的專案介紹，補上背景、過程與實作心得。'.repeat(90)));
     const lastLine = document.createElement('span');
@@ -491,7 +553,7 @@ test('long project copy remains reachable after the archive expands', async ({ p
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
 });
 
-test('all sections and the archive fit phone, narrow tablet and desktop widths', async ({ page }) => {
+test('all sections and the direct project gallery fit phone, narrow tablet and desktop widths', async ({ page }) => {
   await page.goto('./');
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
   for (const viewport of [
@@ -501,14 +563,12 @@ test('all sections and the archive fit phone, narrow tablet and desktop widths',
     { width: 1440, height: 900 },
   ]) {
     await page.setViewportSize(viewport);
-    const archive = page.locator('details#project-archive');
-    if ((await archive.getAttribute('open')) === null) await archive.locator(':scope > summary').click();
     for (const id of ['about', 'projects', 'skills', 'contact']) {
       await page.locator(`#${id}`).scrollIntoViewIfNeeded();
       await expect(page.locator(`#${id}`)).toBeInViewport();
     }
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-      { message: `No page-level horizontal overflow at ${viewport.width}px, including the expanded project archive.` }).toBe(true);
+      { message: `No page-level horizontal overflow at ${viewport.width}px, including the direct project gallery.` }).toBe(true);
     await expect.poll(() => page.evaluate(() => {
       const header = document.querySelector('.site-header')!.getBoundingClientRect();
       const brand = document.querySelector('.brand')!.getBoundingClientRect();
@@ -602,7 +662,7 @@ test('optional email copy reports success and preserves a usable fallback when c
   await expect(page.getByRole('link', { name: email, exact: true })).toBeVisible();
 });
 
-test('without JavaScript or web fonts native chapter navigation and details remain usable', async ({ browser }) => {
+test('without JavaScript or web fonts native navigation and the full project gallery remain usable', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   await context.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
   const page = await context.newPage();
@@ -635,10 +695,9 @@ test('without JavaScript or web fonts native chapter navigation and details rema
     });
     expect(headerContrast.alpha, 'Without JS, the header still needs an opaque backdrop over light sections.').toBeGreaterThanOrEqual(0.9);
     expect(headerContrast.ratio, 'The unfocused navigation label must retain readable contrast without JS.').toBeGreaterThanOrEqual(4.5);
-    const archive = page.locator('details#project-archive');
-    await expect(archive).not.toHaveAttribute('open');
-    await archive.locator(':scope > summary').click();
-    await expect(archive).toHaveAttribute('open');
+    const archive = page.locator('div#project-archive');
+    await expect(archive).toBeVisible();
+    await expect(page.locator('#projects details, #projects summary')).toHaveCount(0);
     await expect(archive.locator('[data-project-panel]')).toHaveCount(10);
     await expect(archive.locator('[data-project-panel][inert]')).toHaveCount(0);
     await page.getByRole('navigation', { name: '章節導覽' }).getByRole('link', { name: /聯繫方式/ }).click();

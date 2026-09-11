@@ -175,7 +175,7 @@ function writeChapterHash(index: number, mode: 'push' | 'replace' | 'none') {
 
 function navigateChapter(index: number, options: { focus?: boolean; history?: 'push' | 'replace' | 'none'; animate?: boolean } = {}) {
   if (!sections[index]) return;
-  // Cancel a pending featured-card scroll before starting a newer chapter intent.
+  // Release project hover/entrance motion before a newer chapter intent.
   document.dispatchEvent(new CustomEvent('personalweb:chapter-navigation'));
   cancelTween();
   writeChapterHash(index, options.history ?? 'replace');

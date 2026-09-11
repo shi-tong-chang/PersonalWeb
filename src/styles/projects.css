@@ -1,25 +1,18 @@
 /* A quiet astronomical atlas: a single work and its place in the constellation. */
 .projects-layout { min-width: 0; }
 .project-gallery {
-  display: flex; flex-direction: column; min-width: 0; padding-top: 28px; color: #eceaf4;
+  display: flex; flex-direction: column; min-width: 0; color: #eceaf4;
   --rail-progress: 0; --archive-muted: #abb4ca;
   --archive-line: #babedd33; --archive-accent: #d9c093; --archive-lilac: #b7a4df;
   --archive-surface: #10182d; --archive-deep: #090f20;
 }
-.project-gallery > .gallery-heading { order: 0; }
 .project-gallery > .project-stage { order: 1; }
 .project-gallery > .project-library { order: 2; }
 .project-panel:focus-visible { outline: 2px solid var(--archive-accent); outline-offset: 8px; }
-.gallery-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
-.gallery-heading .eyebrow { color: var(--archive-accent); font-size: 10px; gap: 10px; }
-.atlas-heading-star { font-size: 20px; line-height: 1; color: var(--archive-lilac); }
-.gallery-heading h3 { margin: 9px 0 0; font-size: clamp(18px, 2vw, 26px); line-height: 1.6; font-weight: 500; letter-spacing: .035em; }
-.gallery-note { display: flex; flex-direction: column; gap: 9px; color: var(--archive-muted); font-size: 11px; white-space: nowrap; padding-bottom: 7px; text-align: right; }
-.gallery-note > span { color: var(--archive-lilac); font: 8px var(--latin, sans-serif); letter-spacing: .17em; }
 .project-stage { position: relative; }
 .project-panel { min-width: 0; scroll-margin-top: 120px; scroll-margin-bottom: calc(var(--dock-height, 56px) + 24px); }
 .project-panel + .project-panel { margin-top: 70px; }
-.project-panel-motion { display: grid; grid-template-columns: .8fr 1.2fr; gap: 7%; align-items: center; min-height: 350px; }
+.project-panel-motion { display: grid; grid-template-columns: .74fr 1.26fr; gap: 6%; align-items: center; min-height: 350px; }
 .project-gallery.is-enhanced .project-stage { display: grid; }
 .project-gallery.is-enhanced .project-panel { grid-area: 1 / 1; margin: 0; opacity: 0; visibility: hidden; pointer-events: none; }
 .project-gallery.is-enhanced .project-panel.is-current { opacity: 1; visibility: visible; pointer-events: auto; }
@@ -29,8 +22,8 @@
 .project-state { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; color: #b6bfd5; }
 .project-state::before { content: ''; width: 5px; height: 5px; background: var(--archive-accent); border-radius: 50%; box-shadow: 0 0 8px #d9c09340; }
 .project-state.is-reserved::before { background: transparent; border: 1px solid #a59cbb; width: 6px; height: 6px; box-shadow: none; }
-.project-category { margin-top: 27px; color: var(--archive-muted); letter-spacing: .1em; font-size: 11px; line-height: 1.6; }
-.project-name { font: 500 clamp(35px, 3.8vw, 58px)/1.16 var(--latin, sans-serif); color: #f0edf6; letter-spacing: -.045em; overflow-wrap: anywhere; margin: 9px 0 0; }
+.project-category { margin: 0; color: var(--archive-muted); letter-spacing: .07em; font-size: 10px; line-height: 1.6; }
+.project-name { font: 500 clamp(35px, 3.8vw, 58px)/1.16 var(--latin, sans-serif); color: #f0edf6; letter-spacing: -.045em; overflow-wrap: anywhere; margin: 20px 0 0; }
 .project-poem { margin-top: 15px; font-size: 16px; color: #dbd7e7; line-height: 1.85; letter-spacing: .025em; }
 .project-story .project-description { max-width: 410px; font-size: 13px; line-height: 1.95; color: var(--archive-muted); margin-top: 15px; overflow-wrap: anywhere; }
 .project-role { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 12px; color: var(--archive-muted); font-size: 12px; line-height: 1.8; }
@@ -43,7 +36,7 @@
 .project-waiting { display: inline-flex; align-items: center; gap: 10px; font-size: 12px; color: var(--archive-muted); }
 .project-waiting > i { width: 17px; height: 1px; background: #b7a4df99; }
 
-.project-visual { position: relative; min-width: 0; width: 100%; max-width: 660px; justify-self: end; padding: 12px 0; }
+.project-visual { position: relative; min-width: 0; width: 100%; max-width: 780px; justify-self: end; padding: 12px 0; }
 .project-frame { position: relative; overflow: hidden; border: 1px solid #b7a4df45; border-radius: 2px; background: #0c1428; box-shadow: 0 20px 55px -28px #000a; }
 .project-frame::after { content: ''; position: absolute; inset: 6px; pointer-events: none; border: 1px solid #b7a4df0d; }
 .frame-bar { min-height: 29px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 12px; color: #b0a4c8; font: 8px var(--latin, sans-serif); letter-spacing: .12em; border-bottom: 1px solid #b7a4df26; background: #10172b; }
@@ -82,7 +75,9 @@
 .project-track { display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; padding: 5px 3px 10px; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #b7a4df80 transparent; scroll-behavior: auto; scroll-padding-inline: 55px; }
 .project-gallery.is-enhanced .project-track { scrollbar-width: none; }
 .project-gallery.is-enhanced .project-track::-webkit-scrollbar { display: none; }
-.project-tab { display: block; flex: 0 0 clamp(145px, 12.5vw, 183px); min-width: 0; padding: 5px 5px 0; border: 1px solid #b7a4df2e; border-radius: 2px; background: #111a2b; scroll-margin-bottom: calc(var(--dock-height, 56px) + 24px); transition: border-color .22s, background-color .22s; }
+/* The root already reserves the fixed dock with scroll-padding-bottom. Adding
+   that inset again here makes native keyboard focus scroll an already visible tab. */
+.project-tab { display: block; flex: 0 0 clamp(145px, 12.5vw, 183px); min-width: 0; padding: 5px 5px 0; border: 1px solid #b7a4df2e; border-radius: 2px; background: #111a2b; transition: border-color .22s, background-color .22s; }
 .project-tab:hover { border-color: #b7a4df8a; background: #182138; }
 .project-tab[aria-selected="true"] { border-color: #d9c093b0; background: #1a2034; box-shadow: inset 0 -2px #d9c093; }
 .project-tab:focus-visible { outline: 2px solid var(--archive-accent); outline-offset: 2px; }
@@ -114,18 +109,17 @@
 .gallery-empty { margin-block: 65px; font-size: 20px; color: var(--archive-muted); }
 
 @media (max-width: 1100px) {
-  .project-panel-motion { gap: 5%; grid-template-columns: .95fr 1.05fr; }
+  .project-panel-motion { gap: 5%; grid-template-columns: .9fr 1.1fr; }
   .project-name { font-size: 39px; }.project-poem { font-size: 15px; }
-  .project-canvas { aspect-ratio: 1.5; }.gallery-note { font-size: 11px; }
+  .project-canvas { aspect-ratio: 1.5; }
 }
 @media (max-width: 760px) {
-  .gallery-heading { margin-bottom: 26px; }.gallery-note { display: none; }
   .project-gallery > .project-library { order: 1; margin-top: 0; margin-bottom: 28px; }
   .project-gallery > .project-stage { order: 2; }
   .project-panel-motion { grid-template-columns: 1fr; gap: 23px; min-height: 0; }
   .project-story { padding: 0; }.project-visual { grid-row: 1; padding: 0; }
   .project-canvas { aspect-ratio: 1.8; }.visual-caption { margin-top: 13px; }
-  .project-name { font-size: 38px; }.project-category { margin-top: 22px; }
+  .project-name { font-size: 38px; margin-top: 17px; }
   .project-poem { font-size: 16px; margin-top: 12px; }
   .project-story .project-description { max-width: none; font-size: 13px; margin-top: 13px; }
   .project-story .tags { margin-top: 14px; }.project-actions { margin-top: 18px; }
@@ -135,8 +129,6 @@
   .hover-hint { display: none; }.touch-hint { display: inline; }
 }
 @media (max-width: 430px) {
-  .gallery-heading h3 { font-size: 17px; }.gallery-heading .eyebrow { font-size: 9px; }
-  .atlas-heading-star { font-size: 17px; }
   .library-caption { gap: 8px; font-size: 10px; }.library-caption > span:first-child { gap: 7px; }
   .library-caption i { width: 12px; }.library-hint { font-size: 9px; }
   .project-track { gap: 10px; }.project-tab { flex-basis: 133px; }
@@ -147,6 +139,50 @@
   .blank-index { font-size: 80px; }.canvas-coordinate { font-size: 6px; }
   .coordinate-top { left: 10px; top: 10px; }.coordinate-bottom { right: 10px; bottom: 9px; }
   .visual-caption { font-size: 7px; letter-spacing: .06em; }.visual-caption > span:last-child { gap: 6px; }.project-name { font-size: 35px; }
+}
+/* Fit the default work and its complete rail in one desktop chapter. Only the
+   image has a viewport-based height; text stays intrinsic and may grow freely. */
+.is-paged .project-panel-motion { min-height: 0; }
+.is-paged .project-story { padding: 0; }
+.is-paged .project-kicker { gap: 8px 13px; }
+.is-paged .project-name { font-size: clamp(38px, min(4vw, 6svh), 56px); margin-top: 17px; }
+.is-paged .project-poem { margin-top: 11px; }
+.is-paged .project-story .project-description { max-width: none; margin-top: 12px; line-height: 1.85; }
+.is-paged .project-story .tags { margin-top: 14px; }
+.is-paged .project-actions { margin-top: 15px; min-height: 38px; }
+.is-paged .project-visual { max-width: none; padding: 0; }
+.is-paged .project-canvas { height: clamp(220px, calc(100svh - 490px), 360px); aspect-ratio: auto; }
+.is-paged .visual-caption { margin-top: 11px; line-height: 1.4; }
+.is-paged .project-library { margin-top: 18px; }
+.is-paged .library-caption { margin-bottom: 9px; }
+.is-paged .tab-art { height: 56px; }
+.is-paged .tab-label { padding-block: 8px 9px; }
+.is-paged .library-baseline { margin-top: 5px; }
+@media (max-height: 800px) {
+  .is-paged .project-kicker { gap: 7px 10px; }
+  .is-paged .project-edition { font-size: 9px; letter-spacing: .12em; }
+  .is-paged .project-state, .is-paged .project-category { font-size: 9px; }
+  .is-paged .project-name { font-size: clamp(33px, 3.8vw, 44px); line-height: 1.12; margin-top: 12px; }
+  .is-paged .project-poem { font-size: 13px; line-height: 1.65; margin-top: 8px; }
+  .is-paged .project-story .project-description { font-size: 12px; line-height: 1.75; margin-top: 10px; }
+  .is-paged .project-role { font-size: 11px; margin-top: 10px; }
+  .is-paged .project-story .tags { margin-top: 10px; }
+  .is-paged .project-story .tags li { font-size: 9px; padding: 3px 8px; }
+  .is-paged .project-actions { margin-top: 10px; min-height: 32px; }
+  .is-paged .project-actions .text-link { padding-block: 6px; font-size: 11px; }
+  .is-paged .project-waiting { font-size: 11px; }
+  .is-paged .frame-bar { min-height: 24px; font-size: 7px; }
+  .is-paged .visual-caption { margin-top: 9px; font-size: 7px; }
+  .is-paged .project-library { margin-top: 14px; }
+  .is-paged .library-caption { font-size: 10px; margin-bottom: 7px; }
+  .is-paged .library-hint { font-size: 9px; }
+  .is-paged .project-track { padding-block: 3px 7px; }
+  .is-paged .project-tab { padding-top: 4px; }
+  .is-paged .tab-art { height: 44px; }
+  .is-paged .tab-label { padding-block: 6px 7px; font-size: 10px; }
+  .is-paged .tab-star { top: 8px; font-size: 23px; }
+  .is-paged .tab-orbit { top: -3px; }
+  .is-paged .library-baseline { margin-top: 4px; }
 }
 @media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
   .hover-hint { display: none; }

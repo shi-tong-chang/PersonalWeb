@@ -10,7 +10,6 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   const track = trackElement;
 
   const chapter = gallery.closest<HTMLElement>('.chapter');
-  const archive = gallery.closest<HTMLDetailsElement>('details');
   const current = gallery.querySelector<HTMLElement>('[data-project-current]');
   const status = gallery.querySelector<HTMLElement>('[data-project-status]');
   let selected = 0;
@@ -21,8 +20,6 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   let hoverIntensity = 0.65;
   let previousFrame = 0;
   let visible = false;
-  let openFrame = 0;
-  let layoutFrame = 0;
 
   const maximumScroll = () => Math.max(0, track.scrollWidth - track.clientWidth);
   const announceNavigation = () => document.dispatchEvent(new CustomEvent('personalweb:project-navigation'));
@@ -37,7 +34,7 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
 
   function canHover() {
     return projectHover.matches && !projectReducedMotion.matches && visible &&
-      !document.hidden && !chapter?.inert && (!archive || archive.open);
+      !document.hidden && !chapter?.inert;
   }
 
   function updateEdges() {
@@ -58,7 +55,7 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   }
 
   function keepTabVisible(index: number, instant = false) {
-    // Closed details have no usable rail geometry. Restore the selection on open.
+    // Layout may not have a usable rail width yet during initial rendering.
     if (!track.clientWidth) return;
     const trackBounds = track.getBoundingClientRect();
     const tabBounds = tabs[index].getBoundingClientRect();
@@ -113,6 +110,16 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
     }
   }
 
+  function selectFromInteraction(index: number, focus = false) {
+    if (index < 0 || index >= tabs.length) return;
+    // Release an older chapter tween synchronously, before this newer selection.
+    // No deferred window scroll can later steal control from another chapter.
+    announceNavigation();
+    select(index, focus);
+    const hash = '#' + panels[index].id;
+    if (location.hash !== hash) history.replaceState(history.state, '', hash);
+  }
+
   track.setAttribute('role', 'tablist');
   track.setAttribute('aria-orientation', 'horizontal');
   tabs.forEach((tab, index) => {
@@ -121,16 +128,16 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
     panels[index].setAttribute('role', 'tabpanel');
     panels[index].setAttribute('aria-labelledby', tab.id);
     tab.addEventListener('click', event => {
-      if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || tab.hasAttribute('download') || (tab.target && tab.target !== '_self')) return;
       event.preventDefault();
-      select(index);
+      selectFromInteraction(index);
     });
     tab.addEventListener('keydown', event => {
-      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
       if (event.key === ' ') {
         event.preventDefault();
         event.stopPropagation();
-        select(index);
+        selectFromInteraction(index);
         return;
       }
       const next: Record<string, number> = {
@@ -142,7 +149,7 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
       if (!(event.key in next)) return;
       event.preventDefault();
       event.stopPropagation();
-      select(next[event.key], true);
+      selectFromInteraction(next[event.key], true);
     });
   });
 
@@ -204,7 +211,7 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
     stopHover();
     if (maximumScroll() <= 1) return;
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? track.clientWidth : 1;
-    track.scrollTo({ left: track.scrollLeft + delta * unit, behavior: 'instant' });
+    track.scrollTo({ left: Math.max(0, Math.min(maximumScroll(), track.scrollLeft + delta * unit)), behavior: 'instant' });
   }, { passive: false });
   track.addEventListener('scroll', updateEdges, { passive: true });
   track.addEventListener('pointerdown', stopHover);
@@ -226,9 +233,15 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   resizeObserver.observe(track);
   tabs.forEach(tab => resizeObserver.observe(tab));
   const visibilityObserver = new IntersectionObserver(entries => {
+    const wasVisible = visible;
     visible = entries.some(entry => entry.isIntersecting && entry.intersectionRatio > 0);
     if (!visible) stopHover();
-  });
+    else if (!wasVisible) {
+      // Returning to this chapter restores only the horizontal selection rail.
+      keepTabVisible(selected, true);
+      updateEdges();
+    }
+  }, { threshold: [0, 0.001] });
   visibilityObserver.observe(gallery);
   if (chapter) {
     new MutationObserver(() => { if (chapter.inert) stopHover(); })
@@ -237,10 +250,6 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
 
   const stopMotion = () => {
     stopHover();
-    cancelAnimationFrame(openFrame);
-    cancelAnimationFrame(layoutFrame);
-    openFrame = 0;
-    layoutFrame = 0;
     entrance?.cancel();
     entrance = undefined;
     track.scrollTo({ left: track.scrollLeft, behavior: 'instant' });
@@ -253,66 +262,10 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopMotion(); });
   document.addEventListener('personalweb:chapter-navigation', stopMotion);
 
-  // Announce the user's intent synchronously. An asynchronous toggle event could
-  // otherwise cancel a newer chapter navigation started after this interaction.
-  archive?.querySelector<HTMLElement>(':scope > summary')
-    ?.addEventListener('click', announceNavigation);
-
-  archive?.addEventListener('toggle', () => {
-    if (!archive.open) return stopMotion();
-    cancelAnimationFrame(layoutFrame);
-    layoutFrame = requestAnimationFrame(() => {
-      layoutFrame = 0;
-      if (!archive.open) return;
-      keepTabVisible(selected, true);
-      updateEdges();
-    });
-  });
-
-  // Featured cards are ordinary archive links without JavaScript. Enhancement
-  // opens the collection and takes keyboard users straight to the requested work.
-  document.addEventListener('click', event => {
-    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey ||
-      event.metaKey || event.altKey || event.shiftKey) return;
-    const link = event.target instanceof Element
-      ? event.target.closest<HTMLAnchorElement>('a[data-project-open]') : null;
-    if (!link) return;
-    const index = tabs.findIndex(tab => tab.dataset.projectId === link.dataset.projectOpen);
-    if (index < 0) return;
-    event.preventDefault();
-    announceNavigation();
-    if (archive) archive.open = true;
-    cancelAnimationFrame(openFrame);
-    openFrame = requestAnimationFrame(() => {
-      openFrame = 0;
-      if (archive && !archive.open) return;
-      // A chapter transition must release the window before the gallery moves it.
-      announceNavigation();
-      select(index, true, false);
-      // Replace an interrupted chapter destination only after this intent wins.
-      // replaceState preserves history and does not re-enter the hash handler.
-      history.replaceState(history.state, '', '#' + panels[index].id);
-      updateEdges();
-      // Show the stage and rail together when they fit. On shorter screens the
-      // focused tab must still be visible, rather than sitting below the fold.
-      const topInset = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-      const galleryTop = gallery.getBoundingClientRect().top + scrollY;
-      const tabBottom = tabs[index].getBoundingClientRect().bottom + scrollY;
-      const dockBounds = document.querySelector<HTMLElement>('.chapter-dock')?.getBoundingClientRect();
-      const visibleBottom = dockBounds && dockBounds.height > 0
-        ? Math.max(0, Math.min(innerHeight, dockBounds.top)) : innerHeight;
-      window.scrollTo({
-        top: Math.max(0, galleryTop - topInset, tabBottom - visibleBottom + 24),
-        behavior: projectReducedMotion.matches ? 'instant' : 'smooth',
-      });
-    });
-  });
-
   function restoreHashProject() {
     const index = panels.findIndex(panel => '#' + panel.id === location.hash);
     if (index < 0) return false;
     announceNavigation();
-    if (archive) archive.open = true;
     select(index, false, false);
     updateEdges();
     return true;

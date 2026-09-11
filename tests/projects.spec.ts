@@ -5,12 +5,9 @@ const siteURL = 'http://127.0.0.1:4321/PersonalWeb/';
 async function openProjects(page: Page) {
   await page.goto(`${siteURL}#projects`);
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  const archive = page.locator('details#project-archive');
-  await expect(archive).not.toHaveAttribute('open');
-  await archive.locator(':scope > summary').click();
-  await expect(archive).toHaveAttribute('open');
+  await expect(page.locator('div#project-archive.project-atlas')).toBeVisible();
+  await expect(page.locator('#projects details, #projects summary, [data-project-open]')).toHaveCount(0);
   await expect(page.locator('[data-project-gallery]')).toHaveClass(/is-enhanced/);
-  await page.locator('[data-project-track]').evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
 }
 
@@ -39,7 +36,8 @@ test('ten project slots expose one accessible panel and clearly mark nine reserv
   await openProjects(page);
   const gallery = page.locator('[data-project-gallery]');
   const tabs = gallery.getByRole('tab');
-  await expect(gallery.getByRole('heading', { level: 3 })).toHaveAttribute('id', 'archive-heading');
+  await expect(gallery).toHaveAttribute('aria-labelledby', 'projects-heading');
+  await expect(gallery.getByRole('heading', { level: 3 })).toHaveClass('project-name');
   await expect(tabs).toHaveCount(10);
   await expect(gallery.locator('[data-project-panel]')).toHaveCount(10);
   await expect(gallery.locator('.project-state.is-reserved')).toHaveCount(9);
@@ -57,7 +55,7 @@ test('ten project slots expose one accessible panel and clearly mark nine reserv
   await expect(gallery.getByRole('tabpanel')).toHaveAccessibleName(/專案 02.*預留席位/);
   await expect(gallery.getByRole('tabpanel').getByRole('link')).toHaveCount(0);
   await expect(gallery.getByRole('status')).toContainText('第 2 件，共 10 件');
-  await expect(page).toHaveURL(/#projects$/);
+  await expect(page).toHaveURL(/#project-panel-project-02$/);
 });
 
 test('rapid project clicks finish on the latest selection without queued transitions', async ({ page }) => {
@@ -77,18 +75,18 @@ test('rapid project clicks finish on the latest selection without queued transit
   await expect(gallery.getByRole('tabpanel')).toHaveAccessibleName(/專案 10/);
   await expectTabInsideTrack(lastTab);
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
-  await expect(page).toHaveURL(/#projects$/);
+  await expect(page).toHaveURL(/#project-panel-project-10$/);
   expect(errors).toEqual([]);
 });
 
 test('project panel deep links survive reload and later hash changes', async ({ page }) => {
   await page.goto(`${siteURL}#project-panel-project-10`);
   const gallery = page.locator('[data-project-gallery]');
-  const archive = page.locator('details#project-archive');
+  const archive = page.locator('div#project-archive');
   await expect(gallery).toHaveClass(/is-enhanced/);
 
   async function expectLinkedProject(id: string) {
-    await expect(archive).toHaveAttribute('open');
+    await expect(archive).toBeVisible();
     const tab = page.locator(`#project-tab-${id}`);
     const panel = page.locator(`#project-panel-${id}`);
     await expect(tab).toHaveAttribute('aria-selected', 'true');
@@ -96,7 +94,7 @@ test('project panel deep links survive reload and later hash changes', async ({ 
     await expect(gallery.getByRole('tabpanel')).toHaveCount(1);
     await expect(gallery.getByRole('tabpanel')).toHaveAttribute('id', `project-panel-${id}`);
     await expect(panel).not.toHaveAttribute('inert');
-    await expect(panel.locator('h4.project-name')).toBeInViewport();
+    await expect(panel.locator('h3.project-name')).toBeInViewport();
     await expect(page).toHaveURL(new RegExp(`#project-panel-${id}$`));
   }
 
@@ -105,6 +103,14 @@ test('project panel deep links survive reload and later hash changes', async ({ 
   await expectLinkedProject('project-10');
   await page.evaluate(() => { location.hash = '#project-panel-project-02'; });
   await expectLinkedProject('project-02');
+  const historyLength = await page.evaluate(() => history.length);
+  await page.locator('#project-tab-project-02').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('#project-tab-project-03')).toHaveAttribute('aria-selected', 'true');
+  await expect(page).toHaveURL(/#project-panel-project-03$/);
+  expect(await page.evaluate(() => history.length)).toBe(historyLength);
+  await page.reload();
+  await expectLinkedProject('project-03');
 });
 
 test('project Home and End keys reveal their tabs without navigating chapters', async ({ page }) => {
@@ -117,7 +123,7 @@ test('project Home and End keys reveal their tabs without navigating chapters', 
   await expectTabInsideTrack(tabs.last());
   await expectFocusedTabBetweenHeaderAndDock(tabs.last());
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
-  await expect(page).toHaveURL(/#projects$/);
+  await expect(page).toHaveURL(/#project-panel-project-10$/);
 
   await page.keyboard.press('Home');
   await expect(tabs.first()).toBeFocused();
@@ -125,10 +131,10 @@ test('project Home and End keys reveal their tabs without navigating chapters', 
   await expectTabInsideTrack(tabs.first());
   await expectFocusedTabBetweenHeaderAndDock(tabs.first());
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
-  await expect(page).toHaveURL(/#projects$/);
+  await expect(page).toHaveURL(/#project-panel-personal-web$/);
 });
 
-test('edge hover scrolls smoothly, stops on leave, and respects both boundaries', async ({ page }) => {
+test('edge hover stops on leave or chapter navigation, respects boundaries, and resets safely on return', async ({ page }) => {
   await openProjects(page);
   const track = page.locator('[data-project-track]');
   const left = page.getByRole('button', { name: '向左瀏覽專案' });
@@ -138,7 +144,7 @@ test('edge hover scrolls smoothly, stops on leave, and respects both boundaries'
   const start = await scrollLeft(track);
   await right.hover();
   await expect.poll(() => scrollLeft(track)).toBeGreaterThan(start + 60);
-  await page.locator('.gallery-heading').hover();
+  await page.locator('#projects-heading').hover();
   await page.waitForTimeout(100);
   const stopped = await scrollLeft(track);
   await page.waitForTimeout(350);
@@ -146,7 +152,7 @@ test('edge hover scrolls smoothly, stops on leave, and respects both boundaries'
 
   for (let attempt = 0; attempt < 5 && await right.getAttribute('aria-disabled') !== 'true'; attempt++) {
     await right.click();
-    await page.locator('.gallery-heading').hover();
+    await page.locator('#projects-heading').hover();
     await page.waitForTimeout(600);
   }
   await expect(right).toHaveAttribute('aria-disabled', 'true');
@@ -162,17 +168,42 @@ test('edge hover scrolls smoothly, stops on leave, and respects both boundaries'
 
   for (let attempt = 0; attempt < 5 && await left.getAttribute('aria-disabled') !== 'true'; attempt++) {
     await left.click();
-    await page.locator('.gallery-heading').hover();
+    await page.locator('#projects-heading').hover();
     await page.waitForTimeout(600);
   }
   await expect(left).toHaveAttribute('aria-disabled', 'true');
   await expect(right).toHaveAttribute('aria-disabled', 'false');
   expect(await scrollLeft(track)).toBeLessThanOrEqual(2);
+
+  await right.hover();
+  await expect.poll(() => scrollLeft(track)).toBeGreaterThan(60);
+  // Trigger navigation without moving the pointer first: chapter departure,
+  // rather than pointerleave, must cancel the active hover animation.
+  await page.locator('.top-nav a[href="#contact"]').evaluate(link => (link as HTMLAnchorElement).click());
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'contact');
+  const awayPosition = await scrollLeft(track);
+  await page.waitForTimeout(400);
+  expect(Math.abs(await scrollLeft(track) - awayPosition)).toBeLessThanOrEqual(2);
+  await page.mouse.move(700, 400);
+  await page.locator('.top-nav a[href="#projects"]').click();
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
+  const selectedTab = page.locator('[data-project-tab][aria-selected="true"]');
+  await expect(selectedTab).toHaveAttribute('id', 'project-tab-personal-web');
+  await expectTabInsideTrack(selectedTab);
+  const returnedPosition = await scrollLeft(track);
+  await page.waitForTimeout(500);
+  expect(Math.abs(await scrollLeft(track) - returnedPosition)).toBeLessThanOrEqual(2);
 });
 
-test('horizontal and shift wheel stay within the rail while vertical wheel reads inside the expanded chapter', async ({ page }) => {
+test('horizontal and shift wheel stay within the rail while vertical wheel reads long project content', async ({ page }) => {
   await openProjects(page);
   const track = page.locator('[data-project-track]');
+  // A realistic future long description must extend the chapter naturally.
+  await page.getByRole('tabpanel').locator('.project-description').evaluate(element => {
+    element.append(document.createTextNode('補上專案背景、設計選擇與實作心得，所有內容都應能自然閱讀。'.repeat(90)));
+  });
+  await expect.poll(() => page.locator('#projects').evaluate(section => section.getBoundingClientRect().height - innerHeight))
+    .toBeGreaterThan(200);
   await page.locator('#projects').evaluate(section => {
     const bounds = section.getBoundingClientRect();
     window.scrollTo({ top: bounds.top + scrollY + bounds.height - innerHeight, behavior: 'instant' });
@@ -284,19 +315,16 @@ test('without JavaScript or web fonts all ten project articles remain readable i
     await expect.poll(() => page.locator('#projects').evaluate(element => Math.abs(
       element.getBoundingClientRect().top - parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop),
     ))).toBeLessThanOrEqual(1);
-    const archive = page.locator('details#project-archive');
-    await expect(archive).not.toHaveAttribute('open');
-    await archive.locator(':scope > summary').click();
-    await expect(archive).toHaveAttribute('open');
     const gallery = page.locator('[data-project-gallery]');
-  await expect(gallery).not.toHaveClass(/is-enhanced/);
+    await expect(gallery).not.toHaveClass(/is-enhanced/);
+    await expect(page.locator('#projects details, #projects summary')).toHaveCount(0);
     const panels = gallery.getByRole('article');
     await expect(panels).toHaveCount(10);
     await expect(gallery.locator('[data-project-panel][inert]')).toHaveCount(0);
     for (const panel of await panels.all()) {
       await expect(panel).toBeVisible();
-      await panel.locator('h4.project-name').scrollIntoViewIfNeeded();
-      await expect(panel.locator('h4.project-name')).toBeInViewport();
+      await panel.locator('h3.project-name').scrollIntoViewIfNeeded();
+      await expect(panel.locator('h3.project-name')).toBeInViewport();
     }
     await expect(panels.last()).toHaveAccessibleName('專案 10');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

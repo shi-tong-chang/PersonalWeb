@@ -26,7 +26,7 @@ export const copy = {
     signature: '在想像與實作之間，探索自己的可能。',
   },
   projects: {
-    eyebrow: '02 / SELECTED WORK',
+    eyebrow: '02 / PROJECT ATLAS',
     heading: ['讓想像', '成為作品。'],
     subtitle: '從一個念頭出發，留下每一次探索與實作的軌跡。',
     action: '查看 GitHub 專案',

@@ -8,12 +8,7 @@ const asset = (path: string) => /^(https?:\/\/|data:)/i.test(path) ? path : base
 const number = (index: number) => String(index + 1).padStart(2, '0');
 ---
 
-<div class="project-gallery" data-project-gallery role="region" aria-labelledby="archive-heading">
-  <div class="gallery-heading">
-    <div><p class="eyebrow"><span class="atlas-heading-star" aria-hidden="true">✧</span>THE PROJECT CONSTELLATION</p><h3 id="archive-heading">每個想法，都有自己的星軌。</h3></div>
-    <p class="gallery-note"><span aria-hidden="true">CHART / {entries.length ? '01 — ' + number(entries.length - 1) : '00'}</span>持續更新的作品星圖</p>
-  </div>
-
+<div class="project-gallery" data-project-gallery role="region" aria-labelledby="projects-heading">
   {entries.length ? <>
     <div class="project-library">
       <div class="library-caption"><span>瀏覽作品<i aria-hidden="true"></i><span data-project-current>01</span><span class="library-total"> / {number(entries.length - 1)}</span></span><span class="library-hint">點選切換<span class="hover-hint"> · 懸停兩側，繼續探索</span><span class="touch-hint"> · 左右滑動</span></span></div>
@@ -37,9 +32,8 @@ const number = (index: number) => String(index + 1).padStart(2, '0');
       {entries.map((project, index) => <article class="project-panel" id={'project-panel-' + project.id} data-project-panel data-project-title={project.name} aria-labelledby={'project-title-' + project.id}>
         <div class="project-panel-motion">
           <div class="project-story">
-            <div class="project-kicker"><span class="project-edition">PROJECT / {number(index)}</span><span class:list={['project-state', { 'is-reserved': project.status === 'reserved' }]}>{project.status === 'reserved' ? '預留席位' : '已收錄'}</span></div>
-            <p class="project-category">{project.category}{project.year && ' / ' + project.year}</p>
-            <h4 id={'project-title-' + project.id} class="project-name">{project.name}</h4>
+            <div class="project-kicker"><span class="project-edition">PROJECT / {number(index)}</span><span class:list={['project-state', { 'is-reserved': project.status === 'reserved' }]}>{project.status === 'reserved' ? '預留席位' : '已收錄'}</span><p class="project-category">{project.category}{project.year && ' / ' + project.year}</p></div>
+            <h3 id={'project-title-' + project.id} class="project-name">{project.name}</h3>
             <p class="project-poem">{project.subtitle}</p>
             <p class="project-description">{project.description}</p>
             {project.role && <p class="project-role">我的角色<span>{project.role}</span></p>}

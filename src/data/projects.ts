@@ -12,8 +12,6 @@ export interface Project {
   status: 'published' | 'reserved';
   /** Set false to remove this slot from the public gallery. */
   visible: boolean;
-  /** The first three visible featured entries appear before the full archive. */
-  featured?: boolean;
   /** Paths in public/, e.g. /assets/my-project.webp. The Pages base is added for you. */
   cover?: { src: string; alt: string; fit?: 'cover' | 'contain'; position?: string };
   /** Optional live demo, source repository, case study, video or external links. */
@@ -31,7 +29,6 @@ const reserve = (number: string): Project => ({
   tags: [],
   status: 'reserved',
   visible: true,
-  featured: number === '02' || number === '03',
   links: [],
 });
 
@@ -49,7 +46,6 @@ export const projects: Project[] = [
     tags: ['Astro', 'TypeScript', 'CSS'],
     status: 'published',
     visible: true,
-    featured: true,
     cover: {
       src: '/assets/orbital-atlas-v1.svg',
       alt: '深藍星空中的淡紫旋臂、香檳金星軌與行星，構成 PersonalWeb 的原創星圖',

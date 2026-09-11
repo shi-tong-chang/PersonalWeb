@@ -1,6 +1,5 @@
 ---
 import { profile, skills, copy, chapters } from '../data/profile';
-import { projects } from '../data/projects';
 import ProjectGallery from '../components/ProjectGallery.astro';
 import StarField from '../components/StarField.astro';
 import '../styles/global.css';
@@ -8,9 +7,6 @@ import '../styles/global.css';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const canonical = new URL(`${base}/`, Astro.site).href;
 const landscape = `${base}/assets/orbital-atlas-v1.svg`;
-const visibleProjects = projects.filter(project => project.visible);
-const featuredProjects = visibleProjects.filter(project => project.featured).slice(0, 3);
-const assetUrl = (src: string) => /^(https?:)?\/\//.test(src) ? src : `${base}/${src.replace(/^\//, '')}`;
 ---
 <!doctype html>
 <html lang="zh-Hant">
@@ -62,24 +58,11 @@ const assetUrl = (src: string) => /^(https?:)?\/\//.test(src) ? src : `${base}/$
 
       <section class="chapter projects" id="projects" aria-labelledby="projects-heading" tabindex="-1">
         <StarField chart="projects" />
-        <div class="section-inner">
+        <div class="section-inner projects-inner">
           <div class="section-heading work-heading"><div><p class="eyebrow">{copy.projects.eyebrow}</p><h2 id="projects-heading">{copy.projects.heading[0]}，<br class="mobile-break" />{copy.projects.heading[1]}</h2></div><p class="section-subtitle">{copy.projects.subtitle}</p></div>
-          <div class="featured-grid">
-            {featuredProjects.map((project, index) => <a class:list={['featured-card', { 'is-reserved': project.status === 'reserved' }]} href="#project-archive" data-project-open={project.id}>
-              <div class="featured-art">
-                {project.cover ? <><img src={assetUrl(project.cover.src)} alt={project.cover.alt} width="1600" height="1000" loading="lazy" decoding="async" style={`object-fit:${project.cover.fit ?? 'cover'};object-position:${project.cover.position ?? 'center'}`} /><div class="featured-site-mark" aria-hidden="true"><span>STC — A PERSONAL UNIVERSE</span><strong>Ideas into<br />existence.</strong><span>DESIGN × DEVELOPMENT</span></div></> : <div class:list={['reserved-art', `reserved-art--${index}`]} aria-hidden="true"><span class="orbit orbit-one"></span><span class="orbit orbit-two"></span><span class="orbit-point"></span><span class="reserved-art-label">UNCHARTED POSSIBILITIES<span>RESERVED / {String(index + 1).padStart(2, '0')}</span></span></div>}
-                <span class="featured-number">{String(index + 1).padStart(2, '0')}</span><span class="featured-art-action" aria-hidden="true">↗</span>
-              </div>
-              <div class="featured-meta"><span>{project.category}</span><span>{project.status === 'reserved' ? '預留作品' : project.year}</span></div>
-              <h3>{project.name}<span aria-hidden="true">↗</span></h3>
-              <p class="featured-description">{project.status === 'reserved' ? '新的故事尚未開始，這裡留給下一件作品。' : project.description}</p>
-              {project.tags.length > 0 && <ul class="tags" aria-label={`${project.name} 使用技術`}>{project.tags.map(tag => <li>{tag}</li>)}</ul>}
-            </a>)}
-          </div>
-          <details class="project-archive" id="project-archive">
-            <summary><span><span class="archive-eyebrow">THE PROJECT ATLAS</span>瀏覽完整作品庫 <small>{String(visibleProjects.length).padStart(2, '0')}</small></span><span class="archive-summary-note">每件作品，都是星圖上的一個座標</span><span class="archive-toggle" aria-hidden="true"></span></summary>
+          <div class="project-atlas" id="project-archive">
             <ProjectGallery />
-          </details>
+          </div>
           <p class="work-footnote">{copy.projects.footer}</p>
         </div>
       </section>
