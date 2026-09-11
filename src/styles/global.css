@@ -83,7 +83,6 @@ img, svg { display: block; max-width: 100%; }
 .skills-heading > .section-subtitle { max-width: none; }
 .thought-orbit { width: 280px; max-width: 100%; margin-top: 18px; color: #b3a0ce; }
 .thought-orbit svg { width: 100%; }
-.thought-orbit > span { display: block; padding-left: 33px; margin-top: -8px; font-size: 10px; letter-spacing: .18em; color: var(--accent); }
 .skill-card { display: flex; gap: 20px; align-items: start; border-top: 1px solid var(--line); padding: 24px 0; }
 .skill-card > div { min-width: 0; }
 .skill-number { font-size: 11px; color: var(--accent); margin-top: 4px; }
@@ -101,10 +100,6 @@ img, svg { display: block; max-width: 100%; }
 .guide-window { height: 350px; position: relative; border-block: 1px solid var(--line); }
 .signal-chart { width: 100%; height: 100%; color: #ccb897; }
 .signal-label { position: absolute; left: 50%; top: 63%; transform: translateX(-50%); white-space: nowrap; font: 8px/1.8 var(--latin); letter-spacing: .15em; color: #c0b0d4; }
-.guide-art figcaption { margin-top: 18px; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
-.guide-art figcaption > span:first-child { font-size: 9px; letter-spacing: .14em; color: var(--muted); }
-.guide-art figcaption > span:last-child { display: flex; align-items: center; gap: 20px; font-size: 12px; color: var(--muted); }
-.guide-art figcaption span[aria-hidden] { color: var(--accent); font-size: 16px; }
 .email-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-size: 14px; margin-top: 20px; overflow-wrap: anywhere; }
 .email-actions a { text-decoration: underline; }
 .email-actions button { background: transparent; border: 1px solid #d9c09366; padding: 7px 10px; cursor: pointer; border-radius: 2px; }

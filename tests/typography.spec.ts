@@ -3,7 +3,7 @@ import { observeStartupScrollSettled } from './helpers/navigation';
 
 const siteURL = 'http://127.0.0.1:4321/PersonalWeb/';
 const chapterIds = ['about', 'projects', 'skills', 'timeline', 'contact'];
-const removedWrappers = '.work-footnote, .visual-caption, .skills-note, .timeline-note, .contact-signature';
+const removedWrappers = '.work-footnote, .visual-caption, .skills-note, .timeline-note, .contact-signature, .thought-orbit > span, .guide-art figcaption';
 const removedPhrases = [
   '作品持續累積中，其餘位置留給下一次探索。',
   'DESIGN MEETS DEVELOPMENT',
@@ -12,6 +12,9 @@ const removedPhrases = [
   'EVERY STEP, A NEW COORDINATE.',
   '以下為內容預留，日期與經歷將陸續補上。',
   'STAY CURIOUS. KEEP CREATING.',
+  'CURIOUS BY NATURE.',
+  'OPEN CHANNEL / 05',
+  '我們下個章節見。',
 ];
 
 async function expectRemovedCaptions(page: Page) {
@@ -25,6 +28,10 @@ async function expectRemovedCaptions(page: Page) {
   await expect(page.locator('[data-project-tab]')).toHaveCount(10);
   await expect(page.locator('.project-canvas .canvas-coordinate')).toHaveCount(20);
   await expect(page.locator('.timeline-orbit > svg')).toHaveCount(1);
+  await expect(page.locator('.thought-orbit > svg')).toHaveCount(1);
+  await expect(page.locator('.guide-art > .guide-window')).toHaveCount(1);
+  await expect(page.locator('.guide-window > svg.signal-chart')).toHaveCount(1);
+  await expect(page.locator('.guide-window > .signal-label')).toHaveText('A SIGNAL, A POSSIBILITY.');
   await expect(page.locator('.timeline-date')).toHaveText(['日期待填', '日期待填', '日期待填', '日期待填']);
 }
 
