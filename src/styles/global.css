@@ -259,6 +259,49 @@ body:is([data-theme='projects'], [data-theme='skills']) .site-header { backgroun
   .mobile-break { display: block; }
   .skills-heading h2, .contact-copy h2 { font-size: 26px; }
 }
+/* Desktop chapters fill one screen. Keep height intrinsic so longer copy and
+   the expanded archive can still be read before advancing to the next chapter. */
+.is-paged .chapter {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: calc(var(--header-height) + 32px);
+  padding-bottom: 36px;
+}
+.is-paged .about { padding-top: calc(var(--header-height) + 40px); padding-bottom: 130px; }
+.is-paged .hero-title { font-size: clamp(64px, min(7.8vw, 11.5svh), 118px); }
+.is-paged .about .eyebrow { margin-bottom: 22px; }
+.is-paged .hero-tagline { margin-top: 23px; }
+.is-paged .hero-introduction { margin-top: 12px; }
+.is-paged .hero-actions { margin-top: 24px; }
+.is-paged .hero-colophon { bottom: 30px; padding-top: 20px; }
+.is-paged .work-heading h2 { font-size: clamp(28px, 2.8vw, 40px); margin-top: 12px; }
+.is-paged .featured-grid { grid-template-columns: 1.25fr 1fr 1fr; margin-top: 26px; gap: 24px; }
+.is-paged .featured-art { height: clamp(165px, 24svh, 255px); }
+.is-paged .featured-meta { margin-top: 14px; margin-bottom: 7px; }
+.is-paged .featured-card h3 { font-size: 21px; }
+.is-paged .featured-description { margin-top: 8px; }
+.is-paged .featured-card .tags { margin-top: 10px; }
+.is-paged .project-archive { margin-top: 24px; }
+.is-paged .project-archive > summary { padding-block: 16px; }
+.is-paged .work-footnote { margin-top: 12px; }
+.is-paged .skill-card { padding-block: 21px; }
+.is-paged .contact { padding-bottom: 0; gap: 28px; }
+.is-paged .contact-layout { flex: 1; }
+.is-paged .contact-copy h2 { font-size: clamp(28px, min(3.25vw, 5.5svh), 46px); }
+.is-paged .contact-signature { margin-top: 28px; }
+.is-paged .guide-window { height: min(350px, 43svh); }
+.is-paged .site-footer { width: 100%; margin-top: 0; padding-block: 22px; }
+
+@media (max-height: 800px) {
+  .is-paged .projects { padding-top: calc(var(--header-height) + 20px); padding-bottom: 24px; }
+  .is-paged .featured-grid { margin-top: 20px; gap: 20px; }
+  .is-paged .featured-art { height: clamp(138px, 21svh, 176px); }
+  .is-paged .project-archive { margin-top: 20px; }
+  .is-paged .work-footnote { margin-top: 10px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

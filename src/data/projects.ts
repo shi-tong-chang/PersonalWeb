@@ -44,7 +44,7 @@ export const projects: Project[] = [
     subtitle: '把自己的世界，做成一個網站。',
     category: '個人網站',
     year: '2026',
-    description: '從星海開場，到清楚可讀的作品展示。以 Astro、TypeScript 與 CSS 實作原生捲動敘事、可擴充的專案索引，以及適應不同裝置的互動。',
+    description: '從星海開場，到清楚可讀的作品展示。以 Astro、TypeScript 與 CSS 實作章節式整頁切換、可擴充的專案索引，以及適應不同裝置的互動。',
     role: '',
     tags: ['Astro', 'TypeScript', 'CSS'],
     status: 'published',

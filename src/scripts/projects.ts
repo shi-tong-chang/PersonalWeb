@@ -25,6 +25,7 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   let layoutFrame = 0;
 
   const maximumScroll = () => Math.max(0, track.scrollWidth - track.clientWidth);
+  const announceNavigation = () => document.dispatchEvent(new CustomEvent('personalweb:project-navigation'));
 
   function stopHover() {
     cancelAnimationFrame(hoverFrame);
@@ -250,6 +251,12 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   window.addEventListener('blur', stopHover);
   window.addEventListener('pagehide', stopMotion);
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopMotion(); });
+  document.addEventListener('personalweb:chapter-navigation', stopMotion);
+
+  // Announce the user's intent synchronously. An asynchronous toggle event could
+  // otherwise cancel a newer chapter navigation started after this interaction.
+  archive?.querySelector<HTMLElement>(':scope > summary')
+    ?.addEventListener('click', announceNavigation);
 
   archive?.addEventListener('toggle', () => {
     if (!archive.open) return stopMotion();
@@ -273,12 +280,18 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
     const index = tabs.findIndex(tab => tab.dataset.projectId === link.dataset.projectOpen);
     if (index < 0) return;
     event.preventDefault();
+    announceNavigation();
     if (archive) archive.open = true;
     cancelAnimationFrame(openFrame);
     openFrame = requestAnimationFrame(() => {
       openFrame = 0;
       if (archive && !archive.open) return;
+      // A chapter transition must release the window before the gallery moves it.
+      announceNavigation();
       select(index, true, false);
+      // Replace an interrupted chapter destination only after this intent wins.
+      // replaceState preserves history and does not re-enter the hash handler.
+      history.replaceState(history.state, '', '#' + panels[index].id);
       updateEdges();
       // Show the stage and rail together when they fit. On shorter screens the
       // focused tab must still be visible, rather than sitting below the fold.
@@ -295,6 +308,7 @@ document.querySelectorAll<HTMLElement>('[data-project-gallery]').forEach(gallery
   function restoreHashProject() {
     const index = panels.findIndex(panel => '#' + panel.id === location.hash);
     if (index < 0) return false;
+    announceNavigation();
     if (archive) archive.open = true;
     select(index, false, false);
     updateEdges();

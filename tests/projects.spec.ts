@@ -12,7 +12,6 @@ async function openProjects(page: Page) {
   await expect(page.locator('[data-project-gallery]')).toHaveClass(/is-enhanced/);
   await page.locator('[data-project-track]').evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
-  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
 }
 
 async function scrollLeft(track: Locator) {
@@ -158,9 +157,13 @@ test('edge hover scrolls smoothly, stops on leave, and respects both boundaries'
   expect(await scrollLeft(track)).toBeLessThanOrEqual(2);
 });
 
-test('horizontal and shift wheel stay within the rail while vertical wheel scrolls the page naturally', async ({ page }) => {
+test('horizontal and shift wheel stay within the rail while vertical wheel reads inside the expanded chapter', async ({ page }) => {
   await openProjects(page);
   const track = page.locator('[data-project-track]');
+  await page.locator('#projects').evaluate(section => {
+    const bounds = section.getBoundingClientRect();
+    window.scrollTo({ top: bounds.top + scrollY + bounds.height - innerHeight, behavior: 'instant' });
+  });
   await track.hover();
   const start = await scrollLeft(track);
   const pageStart = await page.evaluate(() => scrollY);
@@ -177,11 +180,12 @@ test('horizontal and shift wheel stay within the rail while vertical wheel scrol
   await expect(page).toHaveURL(/#projects$/);
   expect(Math.abs(await page.evaluate(() => scrollY) - pageStart)).toBeLessThanOrEqual(2);
 
-  await page.mouse.wheel(0, 180);
-  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(pageStart + 100);
+  await page.mouse.wheel(0, -180);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(pageStart - 100);
   await page.waitForTimeout(300);
-  expect(await page.evaluate(() => scrollY) - pageStart).toBeLessThan(350);
+  expect(pageStart - await page.evaluate(() => scrollY)).toBeLessThan(350);
   await expect(page.locator('#projects')).toBeInViewport();
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
 });
 
 test('a non-overflowing project rail never leaks shift wheel into chapter navigation', async ({ page }) => {

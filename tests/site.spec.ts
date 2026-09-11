@@ -1,6 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const siteURL = 'http://127.0.0.1:4321/PersonalWeb/';
+
+async function expectChapterAtTop(page: Page, id: string) {
+  // Let the same late-font alignment used by the page settle before measuring.
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await expect.poll(() => page.locator(`#${id}`).evaluate(element => Math.abs(element.getBoundingClientRect().top)),
+    { message: `Desktop navigation must finish at the start of the ${id} chapter.` }).toBeLessThanOrEqual(2);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', id);
+}
 
 test('the owner is the hero and the star-sea artwork loads without runtime errors', async ({ page }) => {
   const errors: string[] = [];
@@ -17,25 +25,104 @@ test('the owner is the hero and the star-sea artwork loads without runtime error
   }), { message: 'The star-sea hero artwork must load successfully.' }).toBe(true);
   await expect(page.locator('.chapter')).toHaveCount(4);
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
-  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
   expect(errors).toEqual([]);
 });
 
-test('desktop wheel and keyboard scrolling remain native instead of jumping chapters', async ({ page }) => {
+test('desktop wheel and keyboard navigate whole chapters in both directions', async ({ page }) => {
   await page.goto('./');
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
+  await expectChapterAtTop(page, 'about');
   await page.mouse.move(700, 500);
-  const start = await page.evaluate(() => scrollY);
   await page.mouse.wheel(0, 180);
-  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(start + 100);
-  await page.waitForTimeout(300);
-  const afterWheel = await page.evaluate(() => scrollY);
-  expect(afterWheel - start).toBeLessThan(350);
-  await expect(page.locator('#about')).toBeInViewport();
-  await page.keyboard.press('ArrowDown');
-  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(afterWheel);
-  expect(await page.evaluate(() => scrollY) - afterWheel).toBeLessThan(200);
+  await expectChapterAtTop(page, 'projects');
+  await expect(page).toHaveURL(/#projects$/);
+  // A new gesture begins after the transition's short trailing-wheel guard.
+  await page.waitForTimeout(250);
+  await page.mouse.wheel(0, -180);
+  await expectChapterAtTop(page, 'about');
+  await page.keyboard.press('PageDown');
+  await expectChapterAtTop(page, 'projects');
+  await page.keyboard.press('End');
+  await expectChapterAtTop(page, 'contact');
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
+});
+
+test('one trackpad wheel burst advances only one chapter', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
+  await page.mouse.move(700, 500);
+  for (let index = 0; index < 10; index++) await page.mouse.wheel(0, 80);
+  await expectChapterAtTop(page, 'projects');
+  await page.waitForTimeout(900);
+  await expectChapterAtTop(page, 'projects');
+  await expect(page).toHaveURL(/#projects$/);
+});
+
+test('wheel input during a chapter transition never queues a later jump', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
+  await page.mouse.move(700, 500);
+  await page.mouse.wheel(0, 180);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(10);
+  await page.mouse.wheel(0, 240);
+  await page.mouse.wheel(0, -240);
+  await expectChapterAtTop(page, 'projects');
+  await page.waitForTimeout(900);
+  await expectChapterAtTop(page, 'projects');
+});
+
+test('visibility and page lifecycle pauses settle an in-flight chapter instead of leaving half a page', async ({ page }) => {
+  await page.goto('./');
+  await expectChapterAtTop(page, 'about');
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
+  await page.mouse.move(700, 500);
+  await page.mouse.wheel(0, 180);
+  await page.waitForTimeout(120);
+  expect(await page.evaluate(() => Object.hasOwn(document, 'hidden'))).toBe(false);
+  try {
+    // Simulate visibility suspension deterministically in headless Chromium.
+    // The temporary own getter is removed in finally, restoring the native one.
+    const pausedAt = await page.evaluate(() => {
+      const position = scrollY;
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+      document.dispatchEvent(new Event('visibilitychange'));
+      return position;
+    });
+    expect(pausedAt).toBeGreaterThan(0);
+    expect(pausedAt).toBeLessThan(900);
+    await page.waitForTimeout(700);
+    await expect(page.locator('.scene-stars i').first()).toHaveCSS('animation-play-state', 'paused');
+  } finally {
+    await page.evaluate(() => {
+      Reflect.deleteProperty(document, 'hidden');
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+  }
+  await expectChapterAtTop(page, 'projects');
+  await expect(page).toHaveURL(/#projects$/);
+  await expect(page.locator('#projects')).toBeFocused();
+  await expect(page.locator('.scene-stars i').first()).toHaveCSS('animation-play-state', 'paused');
+
+  await page.mouse.wheel(0, 180);
+  await page.waitForTimeout(120);
+  const suspendedAt = await page.evaluate(() => {
+    const position = scrollY;
+    window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }));
+    return position;
+  });
+  expect(suspendedAt).toBeGreaterThan(900);
+  expect(suspendedAt).toBeLessThan(1800);
+  await page.waitForTimeout(700);
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  await expectChapterAtTop(page, 'skills');
+  await expect(page).toHaveURL(/#skills$/);
+  await expect(page.locator('#skills')).toBeFocused();
+  await expect(page.locator('.scene-stars i').first()).toHaveCSS('animation-play-state', 'paused');
+  await page.locator('nav a[href="#about"]').click();
+  await expectChapterAtTop(page, 'about');
+  await expect(page.locator('.scene-stars i').first()).toHaveCSS('animation-play-state', 'running');
 });
 
 test('chapter navigation, accessible focus, deep links and reload work', async ({ page }) => {
@@ -55,12 +142,13 @@ test('chapter navigation, accessible focus, deep links and reload work', async (
     await expect(page.locator(`#${id}`)).toBeFocused();
     await expect(page.locator(`#${id}`)).toBeInViewport();
     await expect(link).toHaveAttribute('aria-current', 'location');
+    await expectChapterAtTop(page, id);
   }
   await expect(page.locator('#contact a[href="https://github.com/shi-tong-chang"]')).toBeVisible();
   await page.goto('./#skills');
-  await expect(page.locator('#skills')).toBeInViewport();
+  await expectChapterAtTop(page, 'skills');
   await page.reload();
-  await expect(page.locator('#skills')).toBeInViewport();
+  await expectChapterAtTop(page, 'skills');
   await expect(page).toHaveURL(/#skills$/);
 });
 
@@ -72,8 +160,71 @@ test('rapid chapter selection finishes at the latest destination without hiding 
     }
   });
   await expect(page.locator('#contact')).toBeFocused();
-  await expect(page.locator('#contact')).toBeInViewport();
+  await expectChapterAtTop(page, 'contact');
   await expect(page).toHaveURL(/#contact$/);
+  await expect(page.locator('.chapter[inert]')).toHaveCount(0);
+  await page.waitForTimeout(850);
+  await expectChapterAtTop(page, 'contact');
+});
+
+test('closed chapters fit common desktop viewports without clipping their content', async ({ page }) => {
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1366, height: 768 },
+    { width: 1280, height: 720 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto('./');
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await expect(page.locator('body')).toHaveClass(/is-paged/);
+    for (const id of ['about', 'projects', 'skills', 'contact']) {
+      await page.locator(`nav a[href="#${id}"]`).click();
+      await expectChapterAtTop(page, id);
+      const bounds = await page.locator(`#${id}`).evaluate(section => {
+        const chapter = section.getBoundingClientRect();
+        const content = section.querySelector(':scope > .section-inner')!.getBoundingClientRect();
+        const header = document.querySelector('.site-header')!.getBoundingClientRect();
+        return {
+          height: chapter.height,
+          contentVisible: content.top >= header.bottom - 1 && content.bottom <= innerHeight + 1,
+          noOverflow: document.documentElement.scrollWidth <= innerWidth,
+        };
+      });
+      expect(Math.abs(bounds.height - viewport.height), `${id} should occupy one ${viewport.height}px viewport.`).toBeLessThanOrEqual(2);
+      expect(bounds.contentVisible, `${id} content must fit below the header at ${viewport.width}×${viewport.height}.`).toBe(true);
+      expect(bounds.noOverflow).toBe(true);
+    }
+  }
+});
+
+test('switching desktop, mobile, short-screen and reduced-motion modes preserves the current chapter', async ({ page }) => {
+  await page.goto('./#skills');
+  await expectChapterAtTop(page, 'skills');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'skills');
+  await expect(page.locator('#skills')).toBeInViewport();
+  await expect.poll(() => page.locator('#skills-heading').evaluate(heading => {
+    const bounds = heading.getBoundingClientRect();
+    return bounds.top >= document.querySelector('.site-header')!.getBoundingClientRect().bottom
+      && bounds.top < innerHeight;
+  }), { message: 'The preserved mobile chapter heading must not be hidden by the fixed header.' }).toBe(true);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
+  await expectChapterAtTop(page, 'skills');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'skills');
+  await expect(page.locator('#skills')).toBeInViewport();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
+  await expectChapterAtTop(page, 'skills');
+  await page.setViewportSize({ width: 1440, height: 600 });
+  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'skills');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
+  await expectChapterAtTop(page, 'skills');
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
 });
 
@@ -119,6 +270,105 @@ for (const height of [900, 600]) {
   });
 }
 
+test('an expanded archive reads within its chapter and only a fresh boundary gesture changes pages', async ({ page }) => {
+  await page.goto('./#projects');
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await expectChapterAtTop(page, 'projects');
+  const projects = page.locator('#projects');
+  await page.locator('#project-archive > summary').click();
+  await expect(page.locator('#project-archive')).toHaveAttribute('open');
+  await expect.poll(() => projects.evaluate(section => section.getBoundingClientRect().height - innerHeight)).toBeGreaterThan(200);
+  await projects.evaluate(section => window.scrollTo({ top: section.getBoundingClientRect().top + scrollY, behavior: 'instant' }));
+  await page.waitForTimeout(250);
+  await page.mouse.move(24, 450);
+  const start = await page.evaluate(() => scrollY);
+  await page.mouse.wheel(0, 180);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(start + 100);
+  expect(await page.evaluate(() => scrollY) - start).toBeLessThan(350);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
+
+  const chapterEnd = await projects.evaluate(section => {
+    const bounds = section.getBoundingClientRect();
+    const end = bounds.top + scrollY + bounds.height - innerHeight;
+    window.scrollTo({ top: end - 100, behavior: 'instant' });
+    return end;
+  });
+  await page.waitForTimeout(250);
+  await page.mouse.wheel(0, 800);
+  await page.mouse.wheel(0, 800);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeCloseTo(chapterEnd, 0);
+  await page.waitForTimeout(850);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
+  expect(Math.abs(await page.evaluate(() => scrollY) - chapterEnd)).toBeLessThanOrEqual(2);
+  await page.mouse.wheel(0, 180);
+  await expectChapterAtTop(page, 'skills');
+});
+
+test('featured navigation cancels a running chapter transition without losing visible focus', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
+  await page.mouse.move(700, 500);
+  await page.mouse.wheel(0, 180);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(10);
+  await page.locator('[data-project-open="project-02"]').evaluate(link => (link as HTMLAnchorElement).click());
+  const tab = page.locator('#project-tab-project-02');
+  await expect(page.locator('#project-archive')).toHaveAttribute('open');
+  await expect(tab).toBeFocused();
+  await expect(tab).toHaveAttribute('aria-selected', 'true');
+  await expect(page).toHaveURL(/#project-panel-project-02$/);
+  await expect(tab).toBeInViewport();
+  await page.waitForTimeout(900);
+  await expect(tab).toBeFocused();
+  await expect(tab).toBeInViewport();
+  await page.reload();
+  await expect(page.locator('#project-archive')).toHaveAttribute('open');
+  await expect(tab).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel')).toHaveAttribute('id', 'project-panel-project-02');
+  await expect(page.getByRole('tabpanel').locator('h4.project-name')).toBeInViewport();
+  await expect(page).toHaveURL(/#project-panel-project-02$/);
+});
+
+test('PageDown and ArrowDown read long chapter content before leaving it', async ({ page }) => {
+  await page.goto('./#projects');
+  await expectChapterAtTop(page, 'projects');
+  await page.locator('#project-archive > summary').click();
+  await expect(page.locator('#project-archive')).toHaveAttribute('open');
+  await page.getByRole('tabpanel').locator('.project-description').evaluate(element => {
+    element.append(document.createTextNode('補上背景、技術選擇與實作心得，長內容也必須能完整閱讀。'.repeat(90)));
+  });
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await page.locator('#projects').evaluate(section => {
+    window.scrollTo({ top: section.getBoundingClientRect().top + scrollY, behavior: 'instant' });
+    (section as HTMLElement).focus({ preventScroll: true });
+  });
+  const start = await page.evaluate(() => scrollY);
+  await page.keyboard.press('PageDown');
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(start + 100);
+  const afterPageDown = await page.evaluate(() => scrollY);
+  expect(afterPageDown - start).toBeLessThanOrEqual(900);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
+  await expect(page).toHaveURL(/#projects$/);
+  await page.keyboard.press('ArrowDown');
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(afterPageDown);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
+  await expect(page).toHaveURL(/#projects$/);
+});
+
+test('a later chapter link wins over a featured card in the same frame', async ({ page }) => {
+  await page.goto('./#projects');
+  await expectChapterAtTop(page, 'projects');
+  await page.evaluate(() => {
+    document.querySelector<HTMLAnchorElement>('[data-project-open="project-02"]')!.click();
+    document.querySelector<HTMLAnchorElement>('nav a[href="#contact"]')!.click();
+  });
+  await expectChapterAtTop(page, 'contact');
+  await expect(page.locator('#contact')).toBeFocused();
+  await expect(page).toHaveURL(/#contact$/);
+  await page.waitForTimeout(900);
+  await expectChapterAtTop(page, 'contact');
+  await expect(page.locator('#contact')).toBeFocused();
+});
+
 test('long project copy remains reachable after the archive expands', async ({ page }) => {
   await page.goto('./#projects');
   const archive = page.locator('details#project-archive');
@@ -146,7 +396,7 @@ test('long project copy remains reachable after the archive expands', async ({ p
       && bounds.right <= Math.min(innerWidth, section.right);
   }), { message: 'The final line must be fully visible inside its section below the fixed header.' }).toBe(true);
   await page.getByRole('navigation').getByRole('link', { name: /聯繫方式/ }).click();
-  await expect(page.locator('#contact')).toBeInViewport();
+  await expectChapterAtTop(page, 'contact');
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
 });
 
