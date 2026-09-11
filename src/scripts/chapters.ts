@@ -30,6 +30,12 @@ let gestureConsumed = false;
 let gestureReadsChapter = false;
 let wheelLockedUntil = 0;
 let nativeHashTimer = 0;
+const initialChapterHash = location.hash;
+const initialChapterIndex = hashIndex(initialChapterHash);
+let initialAlignmentAllowed = initialChapterIndex >= 0;
+let initialAlignmentUntil = performance.now() + 2000;
+let initialAlignmentTimer = 0;
+let initialChapterAligned = false;
 const readingKeys = new Set<string>();
 const consumedKeys = new Set<string>();
 
@@ -124,6 +130,52 @@ function update() {
 
 function scheduleUpdate() {
   if (!frame && !document.hidden) frame = requestAnimationFrame(update);
+}
+
+function stopInitialAlignment() {
+  initialAlignmentAllowed = false;
+  clearTimeout(initialAlignmentTimer);
+  initialAlignmentTimer = 0;
+}
+
+function canAlignInitialChapter() {
+  return initialAlignmentAllowed && !hasInteracted && paged && !tween && !layoutFrame &&
+    !document.hidden && location.hash === initialChapterHash && performance.now() <= initialAlignmentUntil;
+}
+
+function correctInitialChapter() {
+  initialAlignmentTimer = 0;
+  if (!canAlignInitialChapter()) return;
+  const target = Math.min(maximumScroll(), chapterTop(initialChapterIndex));
+  if (Math.abs(window.scrollY - target) <= 1) {
+    initialChapterAligned = true;
+    return;
+  }
+  scrollInstant(target);
+  rememberedIndex = initialChapterIndex;
+  rememberedOffset = 0;
+  initialChapterAligned = true;
+  setActiveChapter(initialChapterIndex);
+  scheduleUpdate();
+}
+
+function scheduleInitialAlignment() {
+  clearTimeout(initialAlignmentTimer);
+  initialAlignmentTimer = 0;
+  if (!canAlignInitialChapter()) return;
+  const target = Math.min(maximumScroll(), chapterTop(initialChapterIndex));
+  if (Math.abs(window.scrollY - target) <= 1) return;
+  // A native fragment leaves a positive header inset. Scrolling well inside an
+  // already aligned chapter is reading, not a startup fragment to pull back.
+  const nativeInset = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+  if (initialChapterAligned && window.scrollY > target + Math.max(40, nativeInset)) return stopInitialAlignment();
+  initialAlignmentTimer = window.setTimeout(correctInitialChapter, 120);
+}
+
+// Tab and inputs inside the gallery must release this startup-only guard too.
+// Capture runs even when an interactive child consumes the bubbling event.
+for (const eventName of ['keydown', 'wheel', 'pointerdown', 'touchstart']) {
+  document.addEventListener(eventName, stopInitialAlignment, { capture: true, passive: true, once: true });
 }
 
 function syncSettledNativeHash() {
@@ -338,6 +390,7 @@ window.addEventListener('hashchange', () => {
 window.addEventListener('popstate', cancelTween);
 
 document.addEventListener('personalweb:project-navigation', () => {
+  stopInitialAlignment();
   hasInteracted = true;
   cancelTween();
   resetWheelGesture();
@@ -348,6 +401,7 @@ document.addEventListener('personalweb:project-navigation', () => {
 // Content ResizeObserver callbacks intentionally do NOT trigger this alignment.
 function configureLayout() {
   if (layoutFrame) return;
+  if (initialAlignmentAllowed && !hasInteracted) initialAlignmentUntil = performance.now() + 2000;
   const index = tween?.index ?? rememberedIndex;
   const offset = tween ? 0 : rememberedOffset;
   const wasPaged = paged;
@@ -367,11 +421,13 @@ function configureLayout() {
       setActiveChapter(index);
     }
     scheduleUpdate();
+    scheduleInitialAlignment();
   });
 }
 
 window.addEventListener('scroll', () => {
   scheduleUpdate();
+  scheduleInitialAlignment();
   clearTimeout(nativeHashTimer);
   nativeHashTimer = 0;
   if (!paged && hasInteracted) nativeHashTimer = window.setTimeout(syncSettledNativeHash, gestureIdle);
@@ -389,13 +445,17 @@ if (hero) {
   sceneObserver.observe(hero);
 }
 
-const layoutObserver = new ResizeObserver(scheduleUpdate);
+const layoutObserver = new ResizeObserver(() => {
+  scheduleUpdate();
+  scheduleInitialAlignment();
+});
 sections.forEach(section => layoutObserver.observe(section));
 
 function alignInitialHash() {
-  const index = hashIndex();
-  if (!hasInteracted && paged && index >= 0) {
-    navigateChapter(index, { history: 'none', animate: false });
+  if (initialAlignmentAllowed && !hasInteracted) {
+    initialAlignmentUntil = performance.now() + 2000;
+    correctInitialChapter();
+    scheduleInitialAlignment();
   }
   scheduleUpdate();
 }
@@ -412,6 +472,8 @@ document.addEventListener('visibilitychange', () => {
     cancelAnimationFrame(frame);
     cancelAnimationFrame(layoutFrame);
     clearTimeout(nativeHashTimer);
+    clearTimeout(initialAlignmentTimer);
+    initialAlignmentTimer = 0;
     nativeHashTimer = 0;
     frame = 0;
     layoutFrame = 0;
@@ -421,6 +483,7 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 window.addEventListener('pagehide', () => {
+  stopInitialAlignment();
   settleTweenBeforePause();
   resetWheelGesture();
   readingKeys.clear();

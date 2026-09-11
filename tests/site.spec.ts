@@ -20,6 +20,29 @@ async function expectBetweenHeaderAndDock(element: Locator) {
   }), { message: 'The target must be fully visible between the fixed header and chapter dock.' }).toBe(true);
 }
 
+async function observeStartupScrollSettled(page: Page) {
+  // Only startup regressions use this observation window: an immediate top=0
+  // can precede the browser's late fragment jump. Never change the tested scroll.
+  await page.evaluate(() => new Promise<void>((resolve, reject) => {
+    let idleTimer = 0;
+    const cleanup = () => {
+      clearTimeout(idleTimer);
+      clearTimeout(timeout);
+      window.removeEventListener('scroll', onScroll);
+    };
+    const onScroll = () => {
+      clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => { cleanup(); resolve(); }, 200);
+    };
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error('Startup fragment scrolling did not settle within five seconds.'));
+    }, 5000);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }));
+}
+
 test('the owner is the hero and the original galaxy artwork loads without runtime errors', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -160,6 +183,52 @@ test('chapter navigation, accessible focus, deep links and reload work', async (
   await page.reload();
   await expectChapterAtTop(page, 'skills');
   await expect(page).toHaveURL(/#skills$/);
+});
+
+test('initial chapter hashes align after delayed stylesheet loading and reload', async ({ page }) => {
+  let delayedStylesheets = 0;
+  // Delay a real render-blocking local asset, rather than adjusting the scroll
+  // position under test. Unavailable web fonts keep this scenario deterministic.
+  await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
+  await page.route('**/PersonalWeb/_astro/*.css', async route => {
+    delayedStylesheets++;
+    await new Promise(resolve => setTimeout(resolve, 250));
+    await route.continue();
+  });
+  for (const id of ['projects', 'skills']) {
+    await page.goto(`./#${id}`);
+    await expect(page.locator('body')).toHaveClass(/is-paged/);
+    await observeStartupScrollSettled(page);
+    await expectChapterAtTop(page, id);
+    await expect(page).toHaveURL(new RegExp(`#${id}$`));
+    await page.reload();
+    await observeStartupScrollSettled(page);
+    await expectChapterAtTop(page, id);
+    await expect(page).toHaveURL(new RegExp(`#${id}$`));
+  }
+  expect(delayedStylesheets).toBeGreaterThanOrEqual(3);
+});
+
+test('a same-document chapter hash stays aligned after mobile-to-desktop layout startup', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('./#projects');
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await expect(page.locator('body')).not.toHaveClass(/is-paged/);
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
+  await expect(page.locator('#projects')).toBeInViewport();
+  await page.evaluate(() => { document.body.dataset.testDocumentMarker = 'same-document'; });
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator('body')).toHaveClass(/is-paged/);
+  await expectChapterAtTop(page, 'projects');
+  // Navigating to the identical hash can invoke a native fragment jump without
+  // another load or hashchange. The marker proves this is not a fresh document.
+  await page.goto('./#projects');
+  await expect(page.locator('body')).toHaveAttribute('data-test-document-marker', 'same-document');
+  await observeStartupScrollSettled(page);
+  await expectChapterAtTop(page, 'projects');
+  await expect(page).toHaveURL(/#projects$/);
+  await expect(page.locator('#current-chapter')).toHaveText('02');
 });
 
 test('rapid chapter selection finishes at the latest destination without hiding other sections', async ({ page }) => {
