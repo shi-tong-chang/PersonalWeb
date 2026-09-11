@@ -313,17 +313,17 @@ test('the mobile dock follows native reading without adding history or overwriti
   await expect(page).toHaveURL(/#projects$/);
   expect(await page.evaluate(() => history.length)).toBe(historyLength);
 
-  await page.goto('./#project-panel-project-02');
-  await expect(page.locator('#project-tab-project-02')).toHaveAttribute('aria-selected', 'true');
+  await page.goto('./#project-panel-personal-web');
+  await expect(page.locator('#project-tab-personal-web')).toHaveAttribute('aria-selected', 'true');
   // Position the reader inside the linked article before exercising native wheel.
-  await page.locator('#project-panel-project-02').evaluate(panel => panel.scrollIntoView({ behavior: 'instant', block: 'start' }));
+  await page.locator('#project-panel-personal-web').evaluate(panel => panel.scrollIntoView({ behavior: 'instant', block: 'start' }));
   const deepLinkHistoryLength = await page.evaluate(() => history.length);
   const toSkills = await page.locator('#skills').evaluate(section => section.getBoundingClientRect().top);
   await page.mouse.wheel(0, toSkills);
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'skills');
   await expect(page.locator('#current-chapter')).toHaveText('03');
   await page.waitForTimeout(250);
-  await expect(page).toHaveURL(/#project-panel-project-02$/);
+  await expect(page).toHaveURL(/#project-panel-personal-web$/);
   expect(await page.evaluate(() => history.length)).toBe(deepLinkHistoryLength);
 });
 
@@ -412,14 +412,15 @@ test('entering projects directly reveals ten equal-priority slots with honest re
   await expect(gallery).toBeInViewport();
   await expect(gallery).toHaveAccessibleName(/專案經歷/);
   await expect(tabs).toHaveCount(10);
-  await expect(tabs.first()).toContainText('PersonalWeb');
-  await expect(tabs.first()).not.toContainText('預留');
+  await expect(tabs.first()).toContainText('ComfyBlend');
+  await expect(tabs.nth(1)).toContainText('PersonalWeb');
+  for (const tab of (await tabs.all()).slice(0, 2)) await expect(tab).not.toContainText('預留');
   for (const tab of await tabs.all()) await expect(tab).toHaveClass('project-tab');
-  for (const tab of (await tabs.all()).slice(1)) await expect(tab).toContainText('預留');
+  for (const tab of (await tabs.all()).slice(2)) await expect(tab).toContainText('預留');
   const tabWidths = await tabs.evaluateAll(elements => elements.map(element => element.getBoundingClientRect().width));
   expect(Math.max(...tabWidths) - Math.min(...tabWidths)).toBeLessThanOrEqual(1);
   await expect(gallery.getByRole('tabpanel')).toHaveCount(1);
-  await expect(gallery.locator('.project-state.is-reserved')).toHaveCount(9);
+  await expect(gallery.locator('.project-state.is-reserved')).toHaveCount(8);
   await page.goto('./#project-archive');
   await expect(gallery).toBeInViewport();
   await expect(page.getByRole('tabpanel').locator('h3.project-name')).toBeInViewport();
@@ -446,7 +447,7 @@ for (const height of [900, 600]) {
     // scroll, so the assertion below measures only project selection behavior.
     await gallery.getByRole('tab').first().evaluate(element => (element as HTMLElement).focus({ preventScroll: true }));
     const initialScroll = await page.evaluate(() => scrollY);
-    for (const [key, id] of [['ArrowRight', 'project-02'], ['End', 'project-10'], ['Home', 'personal-web']]) {
+    for (const [key, id] of [['ArrowRight', 'personal-web'], ['End', 'project-10'], ['Home', 'comfy-blend']]) {
       await page.keyboard.press(key);
       const tab = page.locator(`#project-tab-${id}`);
       await expect(tab).toHaveAttribute('aria-selected', 'true');
@@ -520,7 +521,7 @@ test('direct project selection cancels an older chapter transition and remains r
   await expectChapterAtTop(page, 'projects');
   await page.locator('.top-nav a[href="#skills"]').click();
   await page.waitForTimeout(120);
-  const tab = page.locator('#project-tab-project-02');
+  const tab = page.locator('#project-tab-personal-web');
   const selectedAt = await tab.evaluate(element => {
     const tab = element as HTMLAnchorElement;
     tab.focus({ preventScroll: true });
@@ -531,7 +532,7 @@ test('direct project selection cancels an older chapter transition and remains r
   expect(selectedAt).toBeLessThan(1800);
   await expect(tab).toBeFocused();
   await expect(tab).toHaveAttribute('aria-selected', 'true');
-  await expect(page).toHaveURL(/#project-panel-project-02$/);
+  await expect(page).toHaveURL(/#project-panel-personal-web$/);
   await expect(tab).toBeInViewport();
   await page.waitForTimeout(900);
   await expect(tab).toBeFocused();
@@ -540,9 +541,9 @@ test('direct project selection cancels an older chapter transition and remains r
   expect(Math.abs(await page.evaluate(() => scrollY) - selectedAt)).toBeLessThanOrEqual(2);
   await page.reload();
   await expect(tab).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tabpanel')).toHaveAttribute('id', 'project-panel-project-02');
+  await expect(page.getByRole('tabpanel')).toHaveAttribute('id', 'project-panel-personal-web');
   await expect(page.getByRole('tabpanel').locator('h3.project-name')).toBeInViewport();
-  await expect(page).toHaveURL(/#project-panel-project-02$/);
+  await expect(page).toHaveURL(/#project-panel-personal-web$/);
 });
 
 test('PageDown and ArrowDown read long chapter content before leaving it', async ({ page }) => {
@@ -573,7 +574,7 @@ test('a later chapter link wins over direct project selection in the same frame'
   await page.goto('./#projects');
   await expectChapterAtTop(page, 'projects');
   await page.evaluate(() => {
-    document.querySelector<HTMLAnchorElement>('#project-tab-project-02')!.click();
+    document.querySelector<HTMLAnchorElement>('#project-tab-personal-web')!.click();
     document.querySelector<HTMLAnchorElement>('.top-nav a[href="#contact"]')!.click();
   });
   await expectChapterAtTop(page, 'contact');

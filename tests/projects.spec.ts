@@ -56,7 +56,7 @@ test('the expanded project stage removes its old slogan while preserving its cha
       const panel = gallery.getByRole('tabpanel');
       const story = panel.locator('.project-story');
       const visual = panel.locator('.project-visual');
-      const image = visual.locator('.project-canvas > img');
+      const canvas = visual.locator('.project-canvas');
       await expect(section).not.toContainText(/讓想像\s*[，,]?\s*成為作品[。.]?/);
       await expect(heading).toHaveAccessibleName(/專案經歷/);
       await expect(heading).toContainText('02 / PROJECT ATLAS');
@@ -65,7 +65,10 @@ test('the expanded project stage removes its old slogan while preserving its cha
       await expect(gallery.getByRole('tab')).toHaveCount(10);
       await expect(gallery.locator('[data-project-panel]')).toHaveCount(10);
       await expect(panel).toHaveCount(1);
-      await image.evaluate(element => (element as HTMLImageElement).decode());
+      await expect(panel).toHaveAttribute('id', 'project-panel-comfy-blend');
+      await expect(canvas.locator(':scope > img')).toHaveCount(0);
+      await expect(canvas.locator('.project-blank')).toBeVisible();
+      await expect(canvas.locator('.blank-subtitle')).toHaveText('專案圖像尚未提供');
       for (const surface of [heading, story, visual]) {
         await expect(surface).toBeVisible();
         await expect.poll(() => surface.evaluate(element => {
@@ -88,7 +91,7 @@ test('the expanded project stage removes its old slogan while preserving its cha
       }
       if (viewport.width === 1440) {
         const [artBounds, storyBounds, headerBounds] = await Promise.all([
-          image.boundingBox(), story.boundingBox(), page.locator('.site-header').boundingBox(),
+          canvas.boundingBox(), story.boundingBox(), page.locator('.site-header').boundingBox(),
         ]);
         // Guard the requested larger, higher composition without fixing exact
         // font metrics: the previous artwork was 742 × 360 and copy began at y262.
@@ -160,12 +163,12 @@ test('project actions stay at the lower left above the library through selection
       await openProjects(page);
       const desktop = viewport.width >= 900;
       const githubAction = panel.getByRole('link', { name: /查看 GitHub 專案/ });
-      await expect(githubAction).toHaveAttribute('href', 'https://github.com/shi-tong-chang/PersonalWeb');
+      await expect(githubAction).toHaveAttribute('href', 'https://github.com/shi-tong-chang/ComfyBlend');
       await expectLowerLeftAction(desktop);
       const baseline = await metrics();
       const originalChapterHeight = await page.locator('#projects').evaluate(element => element.getBoundingClientRect().height);
 
-      for (const [tabIndex, id] of [[1, 'project-02'], [0, 'personal-web']] as const) {
+      for (const [tabIndex, id] of [[2, 'project-03'], [1, 'personal-web'], [0, 'comfy-blend']] as const) {
         await gallery.getByRole('tab').nth(tabIndex).click();
         await expect(panel).toHaveAttribute('id', `project-panel-${id}`);
         await expect(page).toHaveURL(new RegExp(`#project-panel-${id}$`));
@@ -175,11 +178,11 @@ test('project actions stay at the lower left above the library through selection
           return Math.abs(layout.actionBottomFromStage - baseline.actionBottomFromStage) <= 2
             && Math.abs(layout.captionTopFromStage - baseline.captionTopFromStage) <= 2;
         }, { message: 'Switching projects must retain the shared action and library positions.' }).toBe(true);
-        if (id === 'project-02') {
+        if (id === 'project-03') {
           await expect(panel.getByRole('link')).toHaveCount(0);
           await expect(panel.locator('.project-waiting')).toBeVisible();
         } else {
-          await expect(githubAction).toHaveAttribute('href', 'https://github.com/shi-tong-chang/PersonalWeb');
+          await expect(githubAction).toHaveAttribute('href', `https://github.com/shi-tong-chang/${id === 'comfy-blend' ? 'ComfyBlend' : 'PersonalWeb'}`);
         }
       }
 
@@ -202,7 +205,7 @@ test('project actions stay at the lower left above the library through selection
   }
 });
 
-test('ten project slots expose one accessible panel and clearly mark nine reservations', async ({ page }) => {
+test('ComfyBlend and PersonalWeb lead ten ordered slots with both links and eight honest reservations', async ({ page }) => {
   await openProjects(page);
   const gallery = page.locator('[data-project-gallery]');
   const tabs = gallery.getByRole('tab');
@@ -210,22 +213,47 @@ test('ten project slots expose one accessible panel and clearly mark nine reserv
   await expect(gallery.getByRole('heading', { level: 3 })).toHaveClass('project-name');
   await expect(tabs).toHaveCount(10);
   await expect(gallery.locator('[data-project-panel]')).toHaveCount(10);
-  await expect(gallery.locator('.project-state.is-reserved')).toHaveCount(9);
+  await expect(gallery.locator('.project-state.is-reserved')).toHaveCount(8);
+  const expectedIds = ['comfy-blend', 'personal-web', ...Array.from({ length: 8 }, (_, index) => `project-${String(index + 3).padStart(2, '0')}`)];
+  expect(await tabs.evaluateAll(elements => elements.map(element => element.getAttribute('data-project-id')))).toEqual(expectedIds);
+  await expect(gallery.locator('#project-tab-project-02, #project-panel-project-02')).toHaveCount(0);
+  for (const [index, tab] of (await tabs.all()).entries()) {
+    await expect(tab.locator('.tab-number')).toHaveText(String(index + 1).padStart(2, '0'));
+    await expect(tab).toHaveAttribute('href', `#project-panel-${expectedIds[index]}`);
+  }
   await expect(gallery.getByRole('tabpanel')).toHaveCount(1);
   await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
-  await expect(gallery.getByRole('tabpanel')).toHaveAccessibleName(/PersonalWeb/);
-  await expect(gallery.getByRole('tabpanel').locator('.project-canvas > img'))
-    .toHaveAttribute('src', '/PersonalWeb/assets/orbital-atlas-v1.svg');
+  await expect(tabs.first()).toHaveAccessibleName('作品 01：ComfyBlend');
+  await expect(tabs.nth(1)).toHaveAccessibleName('作品 02：PersonalWeb');
+  await expect(gallery.getByRole('tabpanel')).toHaveAccessibleName(/ComfyBlend/);
+  await expect(gallery.getByRole('tabpanel').locator('.project-edition')).toHaveText('PROJECT / 01');
+  await expect(gallery.getByRole('tabpanel').locator('.project-state')).not.toHaveClass(/is-reserved/);
+  await expect(gallery.getByRole('tabpanel').locator('.project-canvas > img')).toHaveCount(0);
+  await expect(gallery.getByRole('tabpanel').locator('.blank-subtitle')).toHaveText('專案圖像尚未提供');
   await expect(gallery.getByRole('tabpanel').getByRole('link', { name: /查看 GitHub 專案/ }))
-    .toHaveAttribute('href', 'https://github.com/shi-tong-chang/PersonalWeb');
+    .toHaveAttribute('href', 'https://github.com/shi-tong-chang/ComfyBlend');
 
   await tabs.nth(1).click();
   await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+  await expect(gallery.getByRole('tabpanel')).toHaveAccessibleName(/PersonalWeb/);
+  await expect(gallery.getByRole('tabpanel').locator('.project-edition')).toHaveText('PROJECT / 02');
+  await expect(gallery.getByRole('tabpanel').locator('.project-state')).not.toHaveClass(/is-reserved/);
+  await expect(gallery.getByRole('tabpanel').locator('.project-canvas > img'))
+    .toHaveAttribute('src', '/PersonalWeb/assets/orbital-atlas-v1.svg');
+  await gallery.getByRole('tabpanel').locator('.project-canvas > img').evaluate(element => (element as HTMLImageElement).decode());
+  await expect(gallery.getByRole('tabpanel').locator('.project-canvas > img')).toBeVisible();
+  await expect(gallery.getByRole('tabpanel').getByRole('link', { name: /查看 GitHub 專案/ }))
+    .toHaveAttribute('href', 'https://github.com/shi-tong-chang/PersonalWeb');
+
+  await expect(page).toHaveURL(/#project-panel-personal-web$/);
+  await tabs.nth(2).click();
+  await expect(tabs.nth(2)).toHaveAttribute('aria-selected', 'true');
   await expect(gallery.getByRole('tabpanel')).toHaveCount(1);
-  await expect(gallery.getByRole('tabpanel')).toHaveAccessibleName(/專案 02.*預留席位/);
+  await expect(gallery.getByRole('tabpanel')).toHaveAccessibleName(/專案 03.*預留席位/);
+  await expect(gallery.getByRole('tabpanel').locator('.project-edition')).toHaveText('PROJECT / 03');
   await expect(gallery.getByRole('tabpanel').getByRole('link')).toHaveCount(0);
-  await expect(gallery.getByRole('status')).toContainText('第 2 件，共 10 件');
-  await expect(page).toHaveURL(/#project-panel-project-02$/);
+  await expect(gallery.getByRole('status')).toContainText('第 3 件，共 10 件');
+  await expect(page).toHaveURL(/#project-panel-project-03$/);
 });
 
 test('rapid project clicks finish on the latest selection without queued transitions', async ({ page }) => {
@@ -271,10 +299,19 @@ test('project panel deep links survive reload and later hash changes', async ({ 
   await expectLinkedProject('project-10');
   await page.reload();
   await expectLinkedProject('project-10');
-  await page.evaluate(() => { location.hash = '#project-panel-project-02'; });
-  await expectLinkedProject('project-02');
+  for (const id of ['comfy-blend', 'personal-web']) {
+    await page.goto(`${siteURL}#project-panel-${id}`);
+    await expectLinkedProject(id);
+    await page.reload();
+    await expectLinkedProject(id);
+  }
+  await page.evaluate(() => { location.hash = '#project-panel-comfy-blend'; });
+  await expectLinkedProject('comfy-blend');
   const historyLength = await page.evaluate(() => history.length);
-  await page.locator('#project-tab-project-02').focus();
+  await page.locator('#project-tab-comfy-blend').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('#project-tab-personal-web')).toHaveAttribute('aria-selected', 'true');
+  await expect(page).toHaveURL(/#project-panel-personal-web$/);
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#project-tab-project-03')).toHaveAttribute('aria-selected', 'true');
   await expect(page).toHaveURL(/#project-panel-project-03$/);
@@ -301,7 +338,7 @@ test('project Home and End keys reveal their tabs without navigating chapters', 
   await expectTabInsideTrack(tabs.first());
   await expectFocusedTabBetweenHeaderAndDock(tabs.first());
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
-  await expect(page).toHaveURL(/#project-panel-personal-web$/);
+  await expect(page).toHaveURL(/#project-panel-comfy-blend$/);
 });
 
 test('edge hover stops on leave or chapter navigation, respects boundaries, and resets safely on return', async ({ page }) => {
@@ -358,7 +395,7 @@ test('edge hover stops on leave or chapter navigation, respects boundaries, and 
   await page.locator('.top-nav a[href="#projects"]').click();
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'projects');
   const selectedTab = page.locator('[data-project-tab][aria-selected="true"]');
-  await expect(selectedTab).toHaveAttribute('id', 'project-tab-personal-web');
+  await expect(selectedTab).toHaveAttribute('id', 'project-tab-comfy-blend');
   await expectTabInsideTrack(selectedTab);
   const returnedPosition = await scrollLeft(track);
   await page.waitForTimeout(500);
@@ -491,6 +528,15 @@ test('without JavaScript or web fonts all ten project articles remain readable i
     const panels = gallery.getByRole('article');
     await expect(panels).toHaveCount(10);
     await expect(gallery.locator('[data-project-panel][inert]')).toHaveCount(0);
+    for (const [index, id, name] of [[0, 'comfy-blend', 'ComfyBlend'], [1, 'personal-web', 'PersonalWeb']] as const) {
+      await expect(panels.nth(index)).toHaveAttribute('id', `project-panel-${id}`);
+      await expect(panels.nth(index)).toHaveAccessibleName(name);
+      await expect(panels.nth(index).getByRole('link', { name: /查看 GitHub 專案/ }))
+        .toHaveAttribute('href', `https://github.com/shi-tong-chang/${name}`);
+    }
+    await expect(panels.first().locator('.project-canvas > img')).toHaveCount(0);
+    await expect(panels.first().locator('.blank-subtitle')).toHaveText('專案圖像尚未提供');
+    await expect(panels.nth(1).locator('.project-canvas > img')).toHaveAttribute('src', '/PersonalWeb/assets/orbital-atlas-v1.svg');
     for (const panel of await panels.all()) {
       await expect(panel).toBeVisible();
       await panel.locator('h3.project-name').scrollIntoViewIfNeeded();

@@ -27,7 +27,7 @@ npm run test:e2e
 ## 內容與結構
 
 - `src/data/profile.ts`：姓名、介紹、照片設定、技能／探索方向、章節文案、GitHub 與 Email。現有短句是可替換的版型文案，不是未提供的經歷或成就。
-- `src/data/projects.ts`：10 個可編輯的專案位置，可任意追加；`visible` 控制顯示，依資料順序列出全部作品，不設精選層級。目前 1 件真實作品、9 個明確標示的預留位置。
+- `src/data/projects.ts`：10 個可編輯的專案位置，可任意追加；`visible` 控制顯示，依資料順序列出全部作品，不設精選層級。目前前兩件依序為 ComfyBlend、PersonalWeb，另有 8 個明確標示的預留位置。
 - `src/data/timeline.ts`：大事記的日期、事件與說明，先預留 4 筆，可任意追加；沒有代填真實經歷。
 - `src/pages/index.astro`：首頁 → 完整專案主舞台與索引 → 探索方向 → 大事記 → 聯繫方式。
 - `src/components/Portrait.astro`、`src/styles/portrait.css`、`src/scripts/portraits.ts`：首頁動態水晶球、原照片與輪廓遮罩、固定比例及載入失敗備援。

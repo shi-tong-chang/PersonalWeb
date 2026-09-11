@@ -32,9 +32,22 @@ const reserve = (number: string): Project => ({
   links: [],
 });
 
-// Ten editable slots: one real project + nine explicitly marked reservations.
+// Ten editable slots: two real projects + eight explicitly marked reservations.
 // Replace any reserve(...) with a Project object, or append more entries.
 export const projects: Project[] = [
+  {
+    id: 'comfy-blend',
+    name: 'ComfyBlend',
+    subtitle: '串起故事、場景與影像創作。',
+    category: 'AI 視覺工作流程',
+    year: '',
+    description: '面向小說插圖的角色與場景一致性工作流程，整合 Blender 場景、姿勢控制與 AI 影像生成，串接故事分析、角色建立、場景配置及人工審查。',
+    role: '',
+    tags: ['Blender', 'ComfyUI', 'FastAPI'],
+    status: 'published',
+    visible: true,
+    links: [{ label: '查看 GitHub 專案', href: 'https://github.com/shi-tong-chang/ComfyBlend' }],
+  },
   {
     id: 'personal-web',
     name: 'PersonalWeb',
@@ -54,7 +67,6 @@ export const projects: Project[] = [
     },
     links: [{ label: '查看 GitHub 專案', href: 'https://github.com/shi-tong-chang/PersonalWeb' }],
   },
-  reserve('02'),
   reserve('03'),
   reserve('04'),
   reserve('05'),

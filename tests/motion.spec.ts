@@ -409,7 +409,7 @@ test('wheel navigation slides project copy from the left and artwork from the ri
   await fontsSettled(page);
   await expect(page.locator('body')).toHaveClass(/is-paged/);
   await chapterAtTop(page, 'about');
-  const panel = page.locator('#project-panel-personal-web');
+  const panel = page.locator('#project-panel-comfy-blend');
   const story = panel.locator('.project-story');
   const visual = panel.locator('.project-visual');
   const layout = () => panel.locator('.project-story, .project-visual').evaluateAll(elements => elements.map(element => {
@@ -425,7 +425,7 @@ test('wheel navigation slides project copy from the left and artwork from the ri
     const entrances = (await projectEntrances(page)).slice(-2);
     expect(entrances.map(entrance => entrance.side).sort()).toEqual(['left', 'right']);
     for (const entrance of entrances) {
-      expect(entrance.panel).toBe('project-panel-personal-web');
+      expect(entrance.panel).toBe('project-panel-comfy-blend');
       const [startX, startY = 0] = entrance.start.split(/\s+/).map(Number.parseFloat);
       if (entrance.side === 'left') expect(startX).toBeLessThan(0);
       else expect(startX).toBeGreaterThan(0);
