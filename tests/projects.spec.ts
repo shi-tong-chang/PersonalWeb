@@ -1,4 +1,5 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
+import { observeStartupScrollSettled } from './helpers/navigation';
 
 const siteURL = 'http://127.0.0.1:4321/PersonalWeb/';
 
@@ -9,6 +10,13 @@ async function openProjects(page: Page) {
   await expect(page.locator('#projects details, #projects summary, [data-project-open]')).toHaveCount(0);
   await expect(page.locator('[data-project-gallery]')).toHaveClass(/is-enhanced/);
   await expect(page.locator('.chapter[inert]')).toHaveCount(0);
+  // DOM visibility does not mean the browser's initial fragment navigation
+  // has finished. Establish its final position before keyboard/wheel baselines.
+  await observeStartupScrollSettled(page);
+  if (await page.locator('body').evaluate(body => body.classList.contains('is-paged'))) {
+    await expect.poll(() => page.locator('#projects').evaluate(section => Math.abs(section.getBoundingClientRect().top)),
+      { message: 'Initial desktop navigation must finish at the projects chapter before interacting.' }).toBeLessThanOrEqual(2);
+  }
 }
 
 async function scrollLeft(track: Locator) {

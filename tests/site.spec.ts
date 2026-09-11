@@ -1,4 +1,5 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
+import { observeStartupScrollSettled } from './helpers/navigation';
 
 const siteURL = 'http://127.0.0.1:4321/PersonalWeb/';
 const chapterIds = ['about', 'projects', 'skills', 'timeline', 'contact'];
@@ -19,29 +20,6 @@ async function expectBetweenHeaderAndDock(element: Locator) {
     return bounds.height > 0 && bounds.top >= header.bottom && bounds.bottom <= dock.top
       && bounds.left >= 0 && bounds.right <= innerWidth;
   }), { message: 'The target must be fully visible between the fixed header and chapter dock.' }).toBe(true);
-}
-
-async function observeStartupScrollSettled(page: Page) {
-  // Only startup regressions use this observation window: an immediate top=0
-  // can precede the browser's late fragment jump. Never change the tested scroll.
-  await page.evaluate(() => new Promise<void>((resolve, reject) => {
-    let idleTimer = 0;
-    const cleanup = () => {
-      clearTimeout(idleTimer);
-      clearTimeout(timeout);
-      window.removeEventListener('scroll', onScroll);
-    };
-    const onScroll = () => {
-      clearTimeout(idleTimer);
-      idleTimer = window.setTimeout(() => { cleanup(); resolve(); }, 200);
-    };
-    const timeout = window.setTimeout(() => {
-      cleanup();
-      reject(new Error('Startup fragment scrolling did not settle within five seconds.'));
-    }, 5000);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  }));
 }
 
 test('the owner is the hero and the Milky Way artwork loads without runtime errors', async ({ page }) => {
